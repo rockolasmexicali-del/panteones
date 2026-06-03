@@ -33,6 +33,10 @@ const DEFAULT_SETTINGS = {
 
 const DEFAULT_CATEGORIES = ["Rosas", "Tulipanes", "Girasoles", "Orquideas", "Follaje"];
 
+const SUPABASE_URL = "https://viwvfkiinycvppiknfta.supabase.co";
+const SUPABASE_KEY = "sb_publishable_G5XUi3TX8nGPmd4_muEusw_v88oN7T4";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 class AppDB {
   static init() {
     if (localStorage.getItem('flowers_db_version') !== '1.2') {
@@ -47,6 +51,9 @@ class AppDB {
     if (!localStorage.getItem('flowers_categories')) {
       localStorage.setItem('flowers_categories', JSON.stringify(DEFAULT_CATEGORIES));
     }
+    // Sync from cloud and listen for real-time changes
+    syncFromCloud();
+    setupRealtime();
   }
 
   static get(key) {
@@ -54,10 +61,166 @@ class AppDB {
   }
 
   static set(key, val) {
+    const oldVal = JSON.parse(localStorage.getItem('flowers_' + key)) || [];
     localStorage.setItem('flowers_' + key, JSON.stringify(val));
     // Dispatch general event to trigger reactivity
     window.dispatchEvent(new Event('db_updated'));
+    
+    // Sync changes to Supabase in the background
+    syncToCloud(key, val, oldVal);
   }
+}
+
+async function syncFromCloud() {
+  try {
+    // 1. Fetch categories
+    const { data: categories } = await supabase.from('categories').select('name');
+    if (categories && categories.length > 0) {
+      localStorage.setItem('flowers_categories', JSON.stringify(categories.map(c => c.name)));
+    }
+
+    // 2. Fetch products
+    const { data: products } = await supabase.from('products').select('*').order('id', { ascending: true });
+    if (products && products.length > 0) {
+      localStorage.setItem('flowers_products', JSON.stringify(products));
+    }
+
+    // 3. Fetch users
+    const { data: users } = await supabase.from('users').select('*');
+    if (users) {
+      const mappedUsers = users.map(u => ({
+        id: u.id,
+        name: u.name,
+        alias: u.alias,
+        phone: u.phone,
+        city: u.city,
+        email: u.email,
+        debt: parseFloat(u.debt || 0),
+        creditLimit: parseFloat(u.credit_limit || 0),
+        creditHistory: u.credit_history || []
+      }));
+      localStorage.setItem('flowers_users', JSON.stringify(mappedUsers));
+    }
+
+    // 4. Fetch orders
+    const { data: orders } = await supabase.from('orders').select('*');
+    if (orders) {
+      const mappedOrders = orders.map(o => ({
+        id: o.id,
+        clientName: o.client_name,
+        clientAlias: o.client_alias,
+        phone: o.phone,
+        city: o.city,
+        items: o.items || [],
+        total: parseFloat(o.total || 0),
+        paymentMethod: o.payment_method,
+        status: o.status,
+        date: o.date
+      }));
+      localStorage.setItem('flowers_orders', JSON.stringify(mappedOrders));
+    }
+
+    // Dispatch event to refresh views
+    window.dispatchEvent(new Event('db_updated'));
+  } catch (err) {
+    console.error("Error syncing from Supabase:", err);
+  }
+}
+
+async function syncToCloud(key, val, oldVal) {
+  try {
+    if (key === 'orders') {
+      // Check for deleted orders
+      if (val.length < oldVal.length) {
+        const activeIds = new Set(val.map(item => String(item.id)));
+        const deletedItems = oldVal.filter(item => !activeIds.has(String(item.id)));
+        for (const item of deletedItems) {
+          await supabase.from('orders').delete().eq('id', item.id);
+        }
+      }
+      if (val.length > 0) {
+        const mapped = val.map(o => ({
+          id: o.id,
+          client_name: o.clientName,
+          client_alias: o.clientAlias || '',
+          phone: o.phone,
+          city: o.city,
+          items: o.items,
+          total: o.total,
+          payment_method: o.paymentMethod || 'pedido',
+          status: o.status,
+          date: o.date
+        }));
+        await supabase.from('orders').upsert(mapped);
+      }
+    } else if (key === 'users') {
+      // Check for deleted users
+      if (val.length < oldVal.length) {
+        const activeIds = new Set(val.map(item => String(item.id)));
+        const deletedItems = oldVal.filter(item => !activeIds.has(String(item.id)));
+        for (const item of deletedItems) {
+          await supabase.from('users').delete().eq('id', item.id);
+        }
+      }
+      if (val.length > 0) {
+        const mapped = val.map(u => ({
+          id: u.id,
+          name: u.name,
+          alias: u.alias || '',
+          phone: u.phone || '',
+          city: u.city || '',
+          email: u.email,
+          debt: u.debt || 0,
+          credit_limit: u.creditLimit || 5000,
+          credit_history: u.credit_history || []
+        }));
+        await supabase.from('users').upsert(mapped);
+      }
+    } else if (key === 'products') {
+      // Check for deleted products
+      if (val.length < oldVal.length) {
+        const activeIds = new Set(val.map(item => String(item.id)));
+        const deletedItems = oldVal.filter(item => !activeIds.has(String(item.id)));
+        for (const item of deletedItems) {
+          await supabase.from('products').delete().eq('id', item.id);
+        }
+      }
+      if (val.length > 0) {
+        const mapped = val.map(p => ({
+          id: p.id,
+          name: p.name,
+          price: p.price,
+          stock: p.stock,
+          category: p.category,
+          image: p.image
+        }));
+        await supabase.from('products').upsert(mapped);
+      }
+    } else if (key === 'categories') {
+      // Check for deleted categories
+      if (val.length < oldVal.length) {
+        const activeIds = new Set(val.map(item => String(item)));
+        const deletedItems = oldVal.filter(item => !activeIds.has(String(item)));
+        for (const item of deletedItems) {
+          await supabase.from('categories').delete().eq('name', item);
+        }
+      }
+      if (val.length > 0) {
+        const mapped = val.map(c => ({ name: c }));
+        await supabase.from('categories').upsert(mapped);
+      }
+    }
+  } catch (err) {
+    console.error(`Error syncing ${key} to Supabase:`, err);
+  }
+}
+
+function setupRealtime() {
+  supabase.channel('schema-db-changes')
+    .on('postgres_changes', { event: '*', schema: 'public' }, () => {
+      syncFromCloud();
+    })
+    .subscribe();
 }
 
 AppDB.init();
