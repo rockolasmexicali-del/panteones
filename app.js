@@ -36,6 +36,8 @@ const DEFAULT_CATEGORIES = ["Rosas", "Tulipanes", "Girasoles", "Orquideas", "Fol
 const SUPABASE_URL = "https://viwvfkiinycvppiknfta.supabase.co";
 const SUPABASE_KEY = "sb_publishable_G5XUi3TX8nGPmd4_muEusw_v88oN7T4";
 let supabaseClient = null;
+// Flag to prevent syncFromCloud from overwriting local changes while syncToCloud is in progress
+let isSyncingToCloud = false;
 try {
   if (window.supabase && window.supabase.createClient) {
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -94,10 +96,15 @@ class AppDB {
 
 async function syncFromCloud() {
   if (!supabaseClient) return;
+  // Skip cloud sync if we are currently pushing local changes to avoid race conditions
+  if (isSyncingToCloud) {
+    console.log('[Sync] Skipping syncFromCloud — local sync in progress');
+    return;
+  }
   try {
     // 1. Fetch categories
     const { data: categories } = await supabaseClient.from('categories').select('name');
-    if (categories && categories.length > 0) {
+    if (categories) {
       localStorage.setItem('flowers_categories', JSON.stringify(categories.map(c => c.name)));
     }
 
@@ -151,6 +158,7 @@ async function syncFromCloud() {
 
 async function syncToCloud(key, val, oldVal) {
   if (!supabaseClient) return;
+  isSyncingToCloud = true;
   try {
     if (key === 'orders') {
       // Check for deleted orders
@@ -235,14 +243,28 @@ async function syncToCloud(key, val, oldVal) {
     }
   } catch (err) {
     console.error(`Error syncing ${key} to Supabase:`, err);
+  } finally {
+    // Release the lock after a short delay to let realtime events from our own
+    // changes pass through without triggering a conflicting syncFromCloud
+    setTimeout(() => {
+      isSyncingToCloud = false;
+    }, 2000);
   }
 }
 
+let _realtimeDebounceTimer = null;
 function setupRealtime() {
   if (!supabaseClient) return;
   supabaseClient.channel('schema-db-changes')
     .on('postgres_changes', { event: '*', schema: 'public' }, () => {
-      syncFromCloud();
+      // Debounce realtime events to avoid rapid-fire sync calls
+      // that can overwrite in-flight local changes
+      clearTimeout(_realtimeDebounceTimer);
+      _realtimeDebounceTimer = setTimeout(() => {
+        if (!isSyncingToCloud) {
+          syncFromCloud();
+        }
+      }, 1500);
     })
     .subscribe();
 }
