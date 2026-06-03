@@ -495,8 +495,9 @@ function renderCatalog() {
              ontouchstart="startImagePress('${p.image}', '${escapedName}')"
              ontouchend="cancelImagePress()"
              ontouchcancel="cancelImagePress()"
-             style="cursor: pointer;">
-          <img src="${p.image}" alt="${p.name}" class="product-image" loading="lazy">
+             oncontextmenu="event.preventDefault(); return false;"
+             style="cursor: pointer; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;">
+          <img src="${p.image}" alt="${p.name}" class="product-image" loading="lazy" oncontextmenu="event.preventDefault(); return false;" style="-webkit-touch-callout: none; -webkit-user-select: none; user-select: none;">
           ${badge}
           ${inCart > 0 ? `
             <div class="quantity-controller floating-overlay">
