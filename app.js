@@ -622,8 +622,18 @@ window.showPreviewProduct = function(productId) {
   const combinedName = (p.category && p.category !== 'todas' 
     ? p.category.charAt(0).toUpperCase() + p.category.slice(1) + ' ' 
     : '') + p.name;
-  document.getElementById('fullscreen-image-element').src = p.image;
-  document.getElementById('fullscreen-image-title').innerText = combinedName;
+
+  const imgEl = document.getElementById('fullscreen-image-element');
+  const titleEl = document.getElementById('fullscreen-image-title');
+  if (imgEl) {
+    imgEl.className = ''; // Remove any animation classes on initial open
+    imgEl.src = p.image;
+  }
+  if (titleEl) {
+    titleEl.innerText = combinedName;
+    titleEl.style.opacity = '1';
+  }
+
   openModal('image-preview-modal');
   window.resetPreviewInactivityTimer();
 };
@@ -641,7 +651,41 @@ window.navigatePreview = function(direction) {
     newIndex = 0;
   }
   
-  window.showPreviewProduct(state.visibleProductIds[newIndex]);
+  const imgEl = document.getElementById('fullscreen-image-element');
+  const titleEl = document.getElementById('fullscreen-image-title');
+  if (!imgEl) return;
+
+  const outClass = direction === 1 ? 'anim-slide-out-left' : 'anim-slide-out-right';
+  const inClass = direction === 1 ? 'anim-slide-in-right' : 'anim-slide-in-left';
+
+  imgEl.className = '';
+  if (titleEl) {
+    titleEl.style.opacity = '0';
+    titleEl.style.transition = 'opacity 0.22s';
+  }
+
+  imgEl.classList.add(outClass);
+
+  setTimeout(() => {
+    state.currentPreviewProductId = state.visibleProductIds[newIndex];
+    const products = AppDB.get('products') || [];
+    const p = products.find(prod => prod.id == state.currentPreviewProductId);
+    if (p) {
+      const combinedName = (p.category && p.category !== 'todas' 
+        ? p.category.charAt(0).toUpperCase() + p.category.slice(1) + ' ' 
+        : '') + p.name;
+      imgEl.src = p.image;
+      if (titleEl) {
+        titleEl.innerText = combinedName;
+      }
+      
+      imgEl.className = '';
+      imgEl.classList.add(inClass);
+      if (titleEl) {
+        titleEl.style.opacity = '1';
+      }
+    }
+  }, 220); // Matches the 0.22s animation duration
 };
 
 let touchStartX = 0;
