@@ -243,18 +243,24 @@ async function syncToCloud(key, val, oldVal) {
         if (error) console.error('[Sync] Error upserting products:', error);
       }
     } else if (key === 'categories') {
-      // Categories use name as identifier — use delete-all + insert strategy
-      // to avoid upsert conflicts with unknown primary key structure
+      // Categories: 'name' is the primary key (referenced by products.category FK)
       
-      // Step 1: Delete ALL existing categories from cloud
-      const { error: delError } = await supabaseClient.from('categories').delete().neq('name', '___placeholder___');
-      if (delError) console.error('[Sync] Error clearing categories:', delError);
+      // Step 1: Delete only removed categories (ones in oldVal but not in val)
+      const currentNames = new Set(val.map(c => c.toLowerCase()));
+      const removedCats = oldVal.filter(c => !currentNames.has(c.toLowerCase()));
+      for (const cat of removedCats) {
+        const { error } = await supabaseClient.from('categories').delete().eq('name', cat);
+        if (error) {
+          // 409 = foreign key conflict (category still used by a product), log but don't crash
+          console.warn(`[Sync] Could not delete category "${cat}" (may be in use by products):`, error.message);
+        }
+      }
       
-      // Step 2: Insert all current categories
+      // Step 2: Upsert all current categories
       if (val.length > 0) {
         const mapped = val.map(c => ({ name: c }));
-        const { error: insError } = await supabaseClient.from('categories').insert(mapped);
-        if (insError) console.error('[Sync] Error inserting categories:', insError);
+        const { error } = await supabaseClient.from('categories').upsert(mapped, { onConflict: 'name' });
+        if (error) console.error('[Sync] Error upserting categories:', error);
       }
     } else if (key === 'settings') {
       // Sync settings as a single row
