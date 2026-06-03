@@ -686,7 +686,7 @@ window.submitOrder = function(e) {
 };
 
 function buildWhatsappLink(order) {
-  let msg = `🌸 *NUEVO PEDIDO DE FLORES PREMIUM* 🌸\n\n`;
+  let msg = `🌸 *NUEVO PEDIDO DE LAS FANTASIAS DEL MARCO* 🌸\n`;
   msg += `*Pedido #:* ${order.id}\n`;
   msg += `*Cliente:* ${order.clientName}\n`;
   msg += `*Teléfono:* ${order.phone}\n`;
