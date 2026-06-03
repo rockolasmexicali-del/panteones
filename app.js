@@ -1938,4 +1938,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { passive: true });
   }
 });
-// v1.2 - App completa
