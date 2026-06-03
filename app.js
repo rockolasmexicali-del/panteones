@@ -614,6 +614,42 @@ window.clearPreviewInactivityTimer = function() {
   }
 };
 
+window.renderPreviewQuantityController = function(productId) {
+  const container = document.getElementById('preview-quantity-container');
+  if (!container) return;
+  
+  const products = AppDB.get('products') || [];
+  const p = products.find(prod => prod.id == productId);
+  if (!p) {
+    container.innerHTML = '';
+    return;
+  }
+  
+  const inCart = state.cart[p.id] || 0;
+  
+  if (inCart > 0) {
+    container.innerHTML = `
+      <div class="quantity-controller" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 12px; display: flex; align-items: center; width: 160px; height: 48px; justify-content: space-between; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.4);">
+        <button onclick="updatePreviewQty(${p.id}, -1)" class="btn-qty" style="width: 48px; height: 48px; font-size: 1.4rem; color: white; background: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;">-</button>
+        <span class="qty-display" style="font-size: 1.25rem; font-weight: 800; color: white; width: 40px; text-align: center;">${inCart}</span>
+        <button onclick="updatePreviewQty(${p.id}, 1)" class="btn-qty" style="width: 48px; height: 48px; font-size: 1.4rem; color: white; background: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;" ${inCart >= p.stock ? 'disabled style="opacity: 0.3;"' : ''}>+</button>
+      </div>
+    `;
+  } else {
+    container.innerHTML = `
+      <button onclick="updatePreviewQty(${p.id}, 1)" class="btn-add-cart" style="width: 200px; height: 48px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-glow) 100%); border: none; color: white; border-radius: 12px; font-size: 1rem; font-weight: 800; cursor: pointer; box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4); display: flex; align-items: center; justify-content: center; gap: 8px;">
+        Agregar al Carrito 🛒
+      </button>
+    `;
+  }
+};
+
+window.updatePreviewQty = function(id, diff) {
+  window.resetPreviewInactivityTimer();
+  window.updateCartQty(id, diff);
+  window.renderPreviewQuantityController(id);
+};
+
 window.showPreviewProduct = function(productId) {
   state.currentPreviewProductId = productId;
   const products = AppDB.get('products') || [];
@@ -634,6 +670,7 @@ window.showPreviewProduct = function(productId) {
     titleEl.style.opacity = '1';
   }
 
+  window.renderPreviewQuantityController(productId);
   openModal('image-preview-modal');
   window.resetPreviewInactivityTimer();
 };
@@ -684,6 +721,7 @@ window.navigatePreview = function(direction) {
       if (titleEl) {
         titleEl.style.opacity = '1';
       }
+      window.renderPreviewQuantityController(state.currentPreviewProductId);
     }
   }, 220); // Matches the 0.22s animation duration
 };
