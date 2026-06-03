@@ -35,7 +35,14 @@ const DEFAULT_CATEGORIES = ["Rosas", "Tulipanes", "Girasoles", "Orquideas", "Fol
 
 const SUPABASE_URL = "https://viwvfkiinycvppiknfta.supabase.co";
 const SUPABASE_KEY = "sb_publishable_G5XUi3TX8nGPmd4_muEusw_v88oN7T4";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let supabase = null;
+try {
+  if (window.supabase && window.supabase.createClient) {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  }
+} catch (err) {
+  console.warn("Supabase init failed, running in offline mode:", err);
+}
 
 class AppDB {
   static init() {
@@ -72,6 +79,7 @@ class AppDB {
 }
 
 async function syncFromCloud() {
+  if (!supabase) return;
   try {
     // 1. Fetch categories
     const { data: categories } = await supabase.from('categories').select('name');
@@ -128,6 +136,7 @@ async function syncFromCloud() {
 }
 
 async function syncToCloud(key, val, oldVal) {
+  if (!supabase) return;
   try {
     if (key === 'orders') {
       // Check for deleted orders
@@ -216,6 +225,7 @@ async function syncToCloud(key, val, oldVal) {
 }
 
 function setupRealtime() {
+  if (!supabase) return;
   supabase.channel('schema-db-changes')
     .on('postgres_changes', { event: '*', schema: 'public' }, () => {
       syncFromCloud();
