@@ -175,7 +175,8 @@ async function syncToCloud(key, val, oldVal) {
         const activeIds = new Set(val.map(item => String(item.id)));
         const deletedItems = oldVal.filter(item => !activeIds.has(String(item.id)));
         for (const item of deletedItems) {
-          await supabaseClient.from('orders').delete().eq('id', item.id);
+          const { error } = await supabaseClient.from('orders').delete().eq('id', item.id);
+          if (error) console.error('[Sync] Error deleting order:', error);
         }
       }
       if (val.length > 0) {
@@ -191,7 +192,8 @@ async function syncToCloud(key, val, oldVal) {
           status: o.status,
           date: o.date
         }));
-        await supabaseClient.from('orders').upsert(mapped);
+        const { error } = await supabaseClient.from('orders').upsert(mapped, { onConflict: 'id' });
+        if (error) console.error('[Sync] Error upserting orders:', error);
       }
     } else if (key === 'users') {
       // Check for deleted users
@@ -199,7 +201,8 @@ async function syncToCloud(key, val, oldVal) {
         const activeIds = new Set(val.map(item => String(item.id)));
         const deletedItems = oldVal.filter(item => !activeIds.has(String(item.id)));
         for (const item of deletedItems) {
-          await supabaseClient.from('users').delete().eq('id', item.id);
+          const { error } = await supabaseClient.from('users').delete().eq('id', item.id);
+          if (error) console.error('[Sync] Error deleting user:', error);
         }
       }
       if (val.length > 0) {
@@ -214,7 +217,8 @@ async function syncToCloud(key, val, oldVal) {
           credit_limit: u.creditLimit || 5000,
           credit_history: u.creditHistory || []
         }));
-        await supabaseClient.from('users').upsert(mapped);
+        const { error } = await supabaseClient.from('users').upsert(mapped, { onConflict: 'id' });
+        if (error) console.error('[Sync] Error upserting users:', error);
       }
     } else if (key === 'products') {
       // Check for deleted products
@@ -222,7 +226,8 @@ async function syncToCloud(key, val, oldVal) {
         const activeIds = new Set(val.map(item => String(item.id)));
         const deletedItems = oldVal.filter(item => !activeIds.has(String(item.id)));
         for (const item of deletedItems) {
-          await supabaseClient.from('products').delete().eq('id', item.id);
+          const { error } = await supabaseClient.from('products').delete().eq('id', item.id);
+          if (error) console.error('[Sync] Error deleting product:', error);
         }
       }
       if (val.length > 0) {
@@ -234,31 +239,34 @@ async function syncToCloud(key, val, oldVal) {
           category: p.category,
           image: p.image
         }));
-        await supabaseClient.from('products').upsert(mapped);
+        const { error } = await supabaseClient.from('products').upsert(mapped, { onConflict: 'id' });
+        if (error) console.error('[Sync] Error upserting products:', error);
       }
     } else if (key === 'categories') {
-      // Check for deleted categories
-      if (val.length < oldVal.length) {
-        const activeIds = new Set(val.map(item => String(item)));
-        const deletedItems = oldVal.filter(item => !activeIds.has(String(item)));
-        for (const item of deletedItems) {
-          await supabaseClient.from('categories').delete().eq('name', item);
-        }
-      }
+      // Categories use name as identifier — use delete-all + insert strategy
+      // to avoid upsert conflicts with unknown primary key structure
+      
+      // Step 1: Delete ALL existing categories from cloud
+      const { error: delError } = await supabaseClient.from('categories').delete().neq('name', '___placeholder___');
+      if (delError) console.error('[Sync] Error clearing categories:', delError);
+      
+      // Step 2: Insert all current categories
       if (val.length > 0) {
         const mapped = val.map(c => ({ name: c }));
-        await supabaseClient.from('categories').upsert(mapped);
+        const { error: insError } = await supabaseClient.from('categories').insert(mapped);
+        if (insError) console.error('[Sync] Error inserting categories:', insError);
       }
     } else if (key === 'settings') {
       // Sync settings as a single row
-      await supabaseClient.from('settings').upsert({
+      const { error } = await supabaseClient.from('settings').upsert({
         id: 'app_settings',
         games_enabled: val.gamesEnabled,
         critical_stock_threshold: val.criticalStockThreshold
-      });
+      }, { onConflict: 'id' });
+      if (error) console.error('[Sync] Error upserting settings:', error);
     }
   } catch (err) {
-    console.error(`Error syncing ${key} to Supabase:`, err);
+    console.error(`[Sync] Exception syncing ${key} to Supabase:`, err);
   } finally {
     // Release the lock after a short delay to let realtime events from our own
     // changes pass through without triggering a conflicting syncFromCloud
