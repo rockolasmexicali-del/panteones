@@ -646,7 +646,8 @@ window.renderPreviewQuantityController = function(productId) {
 
 window.updatePreviewQty = function(id, diff) {
   window.resetPreviewInactivityTimer();
-  window.updateCartQty(id, diff);
+  const imgEl = document.getElementById('fullscreen-image-element');
+  window.updateCartQty(id, diff, imgEl);
   window.renderPreviewQuantityController(id);
 };
 
@@ -671,6 +672,13 @@ window.showPreviewProduct = function(productId) {
   }
 
   window.renderPreviewQuantityController(productId);
+
+  // Bring the bottom cart bar on top of the modal overlay so we can see the flower jump
+  const bottomBar = document.getElementById('floating-bottom-bar');
+  if (bottomBar) {
+    bottomBar.style.zIndex = '210';
+  }
+
   openModal('image-preview-modal');
   window.resetPreviewInactivityTimer();
 };
@@ -2031,6 +2039,10 @@ window.closeModal = function(id) {
     modal.classList.remove('visible');
     if (id === 'image-preview-modal') {
       window.clearPreviewInactivityTimer();
+      const bottomBar = document.getElementById('floating-bottom-bar');
+      if (bottomBar) {
+        bottomBar.style.zIndex = '';
+      }
     }
   }
 };

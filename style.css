@@ -1234,7 +1234,7 @@ select option {
 .flying-flower-particle {
   position: fixed;
   font-size: 24px;
-  z-index: 1000;
+  z-index: 220;
   pointer-events: none;
 }
 
