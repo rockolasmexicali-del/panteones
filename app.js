@@ -579,7 +579,7 @@ window.startImagePress = function(src, title) {
     document.getElementById('fullscreen-image-title').innerText = title;
     openModal('image-preview-modal');
     if (navigator.vibrate) navigator.vibrate(50);
-  }, 1000); // 1000ms long press
+  }, 500); // 500ms long press
 };
 
 window.cancelImagePress = function() {
