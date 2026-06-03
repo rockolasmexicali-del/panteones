@@ -651,6 +651,36 @@ window.updatePreviewQty = function(id, diff) {
   window.renderPreviewQuantityController(id);
 };
 
+window.isManualBack = false;
+
+window.addEventListener('popstate', function(event) {
+  if (window.isManualBack) {
+    window.isManualBack = false;
+    return;
+  }
+
+  // Check if the preview modal is visible
+  const previewModal = document.getElementById('image-preview-modal');
+  if (previewModal && previewModal.classList.contains('visible')) {
+    // Close the preview modal safely (browser history already went back, so do not trigger history.back())
+    previewModal.classList.remove('visible');
+    window.clearPreviewInactivityTimer();
+    const bottomBar = document.getElementById('floating-bottom-bar');
+    if (bottomBar) {
+      bottomBar.style.zIndex = '';
+    }
+    return;
+  }
+
+  // If we are in the main view and hit back, prompt to exit
+  if (confirm("¿Estás seguro de que deseas salir de la aplicación?")) {
+    // If yes, let the browser exit (do not push state again)
+  } else {
+    // If no, push state again to intercept the next back action
+    window.history.pushState({ page: 'main' }, '');
+  }
+});
+
 window.showPreviewProduct = function(productId) {
   state.currentPreviewProductId = productId;
   const products = AppDB.get('products') || [];
@@ -681,6 +711,9 @@ window.showPreviewProduct = function(productId) {
 
   openModal('image-preview-modal');
   window.resetPreviewInactivityTimer();
+
+  // Push state to browser history so back button closes this modal
+  window.history.pushState({ modal: 'image-preview-modal' }, '');
 };
 
 window.navigatePreview = function(direction) {
@@ -2043,6 +2076,11 @@ window.closeModal = function(id) {
       if (bottomBar) {
         bottomBar.style.zIndex = '';
       }
+      // If manually closed, remove the history entry we pushed
+      if (window.history.state && window.history.state.modal === 'image-preview-modal') {
+        window.isManualBack = true;
+        window.history.back();
+      }
     }
   }
 };
@@ -2272,6 +2310,10 @@ function initializeApp() {
     switchView('client');
   }
   switchClientTab('catalog');
+
+  // Push main page state to history to enable exit prompt interception
+  window.history.replaceState({ page: 'main' }, '');
+  window.history.pushState({ page: 'main' }, '');
 
   // Monitor url hash changes to open admin if #admin is typed
   window.addEventListener('hashchange', () => {
