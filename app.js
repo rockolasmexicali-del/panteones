@@ -493,6 +493,7 @@ function renderCatalog() {
              onmouseup="cancelImagePress()" 
              onmouseleave="cancelImagePress()"
              ontouchstart="startImagePress('${p.image}', '${escapedName}')"
+             ontouchmove="cancelImagePress()"
              ontouchend="cancelImagePress()"
              ontouchcancel="cancelImagePress()"
              oncontextmenu="event.preventDefault(); return false;"
@@ -578,7 +579,7 @@ window.startImagePress = function(src, title) {
     document.getElementById('fullscreen-image-title').innerText = title;
     openModal('image-preview-modal');
     if (navigator.vibrate) navigator.vibrate(50);
-  }, 500); // 500ms long press
+  }, 1000); // 1000ms long press
 };
 
 window.cancelImagePress = function() {
