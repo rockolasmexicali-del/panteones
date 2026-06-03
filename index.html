@@ -295,6 +295,21 @@
     </div>
   </div>
 
+  <!-- Modal Client: Out of Stock Warning -->
+  <div class="system-modal centered-modal" id="out-of-stock-modal">
+    <div class="modal-overlay" onclick="closeModal('out-of-stock-modal')"></div>
+    <div class="modal-sheet" style="text-align: center; padding: 24px;">
+      <div class="modal-header" style="justify-content: center; border: none; padding-bottom: 0;">
+        <span style="font-size: 3rem; margin-bottom: 8px;">⚠️</span>
+      </div>
+      <h3 style="margin-top: 0; margin-bottom: 8px; color: var(--text-primary);">¡Producto Agotado!</h3>
+      <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem; line-height: 1.4;">
+        Lo sentimos, has alcanzado el límite máximo disponible en stock para este producto.
+      </p>
+      <button onclick="closeModal('out-of-stock-modal')" class="btn-submit-form" style="background: var(--primary-glow); margin: 0 auto; width: auto; padding: 10px 24px;">Aceptar</button>
+    </div>
+  </div>
+
   <!-- Modal Client: Order Details Viewer -->
   <div class="system-modal centered-modal" id="client-order-detail-modal">
     <div class="modal-overlay" onclick="closeModal('client-order-detail-modal')"></div>

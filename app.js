@@ -480,6 +480,8 @@ window.updateCartQty = function(id, diff, element = null) {
     delete state.cart[id];
   } else if (target <= p.stock) {
     state.cart[id] = target;
+  } else if (diff > 0) {
+    openModal('out-of-stock-modal');
   }
 
   // Update the global cart bar first so the DOM elements are created in the page
@@ -563,6 +565,7 @@ function renderCartModalContent() {
   if (items.length === 0) {
     container.innerHTML = `<div class="empty-cart-text">El carrito está vacío 🌸</div>`;
     document.getElementById('checkout-action-btn').disabled = true;
+    closeModal('cart-modal');
     return;
   }
 
@@ -706,6 +709,13 @@ window.toggleProfileLogin = function() {
   if (state.currentUser) {
     // Show active user profile
     const u = state.currentUser;
+    const allOrders = AppDB.get('orders') || [];
+    const userOrders = allOrders.filter(o => 
+      (o.phone && o.phone === u.phone) || 
+      (o.clientName && o.clientName.toLowerCase() === u.name.toLowerCase()) || 
+      (u.alias && o.clientAlias && o.clientAlias.toLowerCase() === u.alias.toLowerCase())
+    );
+
     container.innerHTML = `
       <div class="user-card glass-panel">
         <div class="user-profile-header">
@@ -732,7 +742,7 @@ window.toggleProfileLogin = function() {
           </div>
 
           <h5>Historial de Movimientos</h5>
-          <div class="credit-logs-list">
+          <div class="credit-logs-list" style="max-height: 180px; overflow-y: auto; margin-bottom: 16px;">
             ${u.creditHistory.length === 0 ? `<p class="empty-text">No hay movimientos registrados.</p>` : 
               u.creditHistory.map(h => {
                 const isOrder = h.description.startsWith('Pedido #');
@@ -751,9 +761,35 @@ window.toggleProfileLogin = function() {
               }).join('')
             }
           </div>
+
+          <h5 style="margin-top: 16px;">Historial de Pedidos Realizados</h5>
+          <div class="credit-logs-list" style="max-height: 200px; overflow-y: auto;">
+            ${userOrders.length === 0 ? `<p class="empty-text">No tienes pedidos registrados todavía.</p>` : 
+              userOrders.map(o => {
+                const dateStr = new Date(o.date).toLocaleDateString('es-MX', {
+                  year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+                const statusLabels = {
+                  pendiente: '<span class="badge-status pending" style="padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">Pendiente</span>',
+                  completado: '<span class="badge-status completed" style="padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">Completado</span>',
+                  cancelado: '<span class="badge-status cancelled" style="padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">Cancelado</span>'
+                };
+                return `
+                <div class="history-item clickable" onclick="viewClientOrderDetail('${o.id}')" style="cursor: pointer; padding: 10px 8px;">
+                  <div class="history-meta">
+                    <span class="date">${dateStr}</span>
+                    <span class="desc">Pedido #${o.id} <span style="font-size: 0.75rem; opacity: 0.6;">(Ver detalle 👆)</span></span>
+                    <div style="margin-top: 4px;">${statusLabels[o.status] || o.status}</div>
+                  </div>
+                  <span class="amount" style="font-weight: bold; color: var(--text-primary);">$${o.total.toFixed(2)}</span>
+                </div>
+                `;
+              }).join('')
+            }
+          </div>
         </div>
 
-        <button onclick="logoutUser()" class="btn-logout">Cerrar Sesión</button>
+        <button onclick="logoutUser()" class="btn-logout" style="margin-top: 16px;">Cerrar Sesión</button>
       </div>
     `;
   } else {
@@ -1256,7 +1292,7 @@ function sendWhatsAppTicket(orderId) {
 // === CLIENT ORDER DETAIL VIEWER ===
 window.viewClientOrderDetail = function(orderId) {
   const orders = AppDB.get('orders') || [];
-  const order = orders.find(o => o.id === orderId);
+  const order = orders.find(o => o.id == orderId);
   
   if (!order) {
     alert("No se encontró el detalle de este pedido.");
@@ -1284,7 +1320,7 @@ window.viewClientOrderDetail = function(orderId) {
     </div>
   `;
   
-  document.getElementById('client-order-detail-modal').style.display = 'flex';
+  openModal('client-order-detail-modal');
 };
 
 window.viewOrderDetails = function(id) {
