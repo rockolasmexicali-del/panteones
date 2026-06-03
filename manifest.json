@@ -1,0 +1,18 @@
+{
+  "name": "Flores Artificiales Premium",
+  "short_name": "Flores App",
+  "description": "Catalogo interactivo y divertido de flores artificiales. Compra jugando.",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#0d0b14",
+  "theme_color": "#8b5cf6",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><circle cx='256' cy='256' r='240' fill='%238b5cf6'/><path d='M256 80c-25 0-45 20-45 45s20 45 45 45 45-20 45-45-20-45-45-45zm-100 70c-25 0-45 20-45 45s20 45 45 45 45-20 45-45-20-45-45-45zm200 0c-25 0-45 20-45 45s20 45 45 45 45-20 45-45-20-45-45-45zm-220 130c-25 0-45 20-45 45s20 45 45 45 45-20 45-45-20-45-45-45zm240 0c-25 0-45 20-45 45s20 45 45 45 45-20 45-45-20-45-45-45zM256 220c-20 0-36 16-36 36s16 36 36 36 36-16 36-36-16-36-36-36z' fill='%23ffffff'/></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

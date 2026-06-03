@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Flores Artificiales Premium</title>
+  <meta name="description" content="Catálogo interactivo de flores artificiales. Haz tus pedidos rápido y diviértete.">
+  
+  <!-- PWA Setup -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#8b5cf6">
+  <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><circle cx='256' cy='256' r='240' fill='%238b5cf6'/><path d='M256 80c-25 0-45 20-45 45s20 45 45 45 45-20 45-45-20-45-45-45zm-100 70c-25 0-45 20-45 45s20 45 45 45 45-20 45-45-20-45-45-45zm200 0c-25 0-45 20-45 45s20 45 45 45 45-20 45-45-20-45-45-45zm-220 130c-25 0-45 20-45 45s20 45 45 45 45-20 45-45-20-45-45-45zm240 0c-25 0-45 20-45 45s20 45 45 45 45-20 45-45-20-45-45-45zM256 220c-20 0-36 16-36 36s16 36 36 36 36-16 36-36-16-36-36-36z' fill='%23ffffff'/></svg>">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Simulation Container (Enforces mobile proportions on large screens) -->
+  <div id="app-viewport-wrapper">
+
+    <!-- ==================== CLIENT APP VIEW ==================== -->
+    <div id="client-app-view" style="display: flex; flex-direction: column; flex-grow: 1;">
+      
+      <!-- Header -->
+      <header class="client-header">
+        <h1 class="brand-title" id="brand-header-title">🌸 Flores Premium</h1>
+      </header>
+
+      <!-- Scrollable Tab Container -->
+      <main style="flex-grow: 1; overflow-y: auto; position: relative;">
+        
+        <!-- CLIENT TAB: CATALOG -->
+        <div id="client-tab-catalog" class="client-tab-view">
+          <div class="search-bar-container">
+            <input type="text" class="search-input" placeholder="Buscar flor o color..." oninput="searchProducts(this.value)">
+          </div>
+          
+          <div class="category-scroll-wrapper" id="category-scroll-container">
+            <!-- Chips rendered dynamically -->
+          </div>
+
+          <div class="product-grid" id="client-product-list">
+            <!-- Product Cards render dynamically -->
+          </div>
+        </div>
+
+        <!-- CLIENT TAB: GAMES -->
+        <div id="client-tab-game" class="client-tab-view" style="display: none;">
+          <div id="games-tab-content">
+            <!-- Game Canvas or block settings -->
+          </div>
+        </div>
+
+        <!-- CLIENT TAB: USER PROFILE / LEDGER -->
+        <div id="client-tab-profile" class="client-tab-view" style="display: none;">
+          <div class="profile-view-container" id="profile-content-container">
+            <!-- Profile logs and credentials dynamically -->
+          </div>
+        </div>
+
+      </main>
+
+      <!-- Floating Checkout Bar -->
+      <div class="floating-bottom-bar" id="floating-bottom-bar">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- PWA Install Banner -->
+      <div id="pwa-install-banner" class="pwa-banner">
+        <div class="pwa-banner-content">
+          <span class="pwa-icon">📲</span>
+          <div class="pwa-text">
+            <h4>Instalar Aplicación</h4>
+            <p>Acceso directo y rápido en tu celular.</p>
+          </div>
+        </div>
+        <div class="pwa-banner-actions">
+          <button class="btn-pwa-install" onclick="triggerPwaInstall()">Instalar</button>
+          <button class="btn-pwa-dismiss" onclick="dismissPwaInstall()">Ahora no</button>
+        </div>
+      </div>
+
+      <!-- Navigation footer bar -->
+      <nav class="client-footer-nav">
+        <button class="nav-bar-item active" data-tab="catalog" onclick="switchClientTab('catalog')">
+          <span class="nav-icon">💐</span>
+          <span>Flores</span>
+        </button>
+        <button class="nav-bar-item" data-tab="game" onclick="switchClientTab('game')">
+          <span class="nav-icon">🎮</span>
+          <span>Diversión</span>
+        </button>
+        <button class="nav-bar-item" data-tab="profile" onclick="switchClientTab('profile')">
+          <span class="nav-icon">👤</span>
+          <span>Mi Cuenta</span>
+        </button>
+      </nav>
+
+    </div>
+
+    <!-- ==================== ADMIN DASHBOARD VIEW ==================== -->
+    <div id="admin-app-view" style="display: none;">
+      
+      <header class="admin-header">
+        <h2 class="brand-title">⚙️ Dashboard Admin</h2>
+        <div style="display: flex; gap: 8px;">
+          <button class="role-switcher-btn" style="background: rgba(248, 113, 113, 0.1); border-color: var(--danger); color: var(--danger);" onclick="logoutAdmin()">Cerrar Admin 🔒</button>
+          <button class="role-switcher-btn" onclick="switchView('client')">Ver Catálogo Clientes 🌸</button>
+        </div>
+      </header>
+
+      <div class="admin-main-container">
+        
+        <!-- Icon Navigation Sidebar -->
+        <aside class="admin-sidebar">
+          <button class="admin-sidebar-link active" data-tab="overview" onclick="switchAdminTab('overview')" title="Inicio">📊</button>
+          <button class="admin-sidebar-link" data-tab="products" onclick="switchAdminTab('products')" title="Inventario">💐</button>
+          <button class="admin-sidebar-link" data-tab="orders" onclick="switchAdminTab('orders')" title="Pedidos">📝</button>
+          <button class="admin-sidebar-link" data-tab="users" onclick="switchAdminTab('users')" title="Créditos">👥</button>
+          <button class="admin-sidebar-link" data-tab="settings" onclick="switchAdminTab('settings')" title="Configuración">⚙️</button>
+        </aside>
+
+        <!-- Admin Content panels -->
+        <main class="admin-content-area">
+          
+          <!-- Tab panel: Overview -->
+          <div id="admin-tab-overview" class="admin-tab-content">
+            <div class="admin-dashboard-grid">
+              <div class="admin-metric-card" onclick="switchAdminTab('orders')">
+                <div class="metric-details">
+                  <h4>Pedidos Pendientes</h4>
+                  <span class="number" id="overview-pending-count">0</span>
+                </div>
+                <div class="metric-icon">🔔</div>
+              </div>
+            </div>
+
+            <h3>Alertas de Inventario</h3>
+            <div id="overview-stock-alerts">
+              <!-- Dynamically populated warnings -->
+            </div>
+
+            <div class="analytics-chart-box">
+              <h3>Ventas según método de pago</h3>
+              <canvas id="analytics-canvas"></canvas>
+            </div>
+          </div>
+
+          <!-- Tab panel: Products -->
+          <div id="admin-tab-products" class="admin-tab-content" style="display: none;">
+            <div class="admin-actions-bar" style="display: flex; gap: 8px;">
+              <button class="btn-admin-add" onclick="openAddProductModal()">+ Añadir Modelo 🌸</button>
+              <button class="btn-admin-add" onclick="openCategoriesModal()" style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-primary);">+ Gestionar Categorías 🏷️</button>
+            </div>
+            <div class="admin-table-container">
+              <table class="admin-data-table">
+                <thead>
+                  <tr>
+                    <th>Foto</th>
+                    <th>Modelo</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-products-table-body">
+                  <!-- Row listing -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Tab panel: Orders -->
+          <div id="admin-tab-orders" class="admin-tab-content" style="display: none;">
+            <div class="admin-actions-bar" style="display: flex; gap: 8px; margin-bottom: 16px; align-items: center; width: 100%;">
+              <button id="btn-order-filter-pendiente" class="btn-admin-add" onclick="filterAdminOrders('pendiente')">Pendientes 🔔</button>
+              <button id="btn-order-filter-completado" class="btn-admin-add" style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-primary);" onclick="filterAdminOrders('completado')">Completados ✓</button>
+              <button id="btn-order-filter-cancelado" class="btn-admin-add" style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-primary);" onclick="filterAdminOrders('cancelado')">Cancelados ❌</button>
+              <button id="btn-print-pending-orders" class="btn-admin-add" style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #10b981; margin-left: auto;" onclick="printPendingOrders()">Imprimir Pendientes 🖨️</button>
+            </div>
+            <div class="admin-table-container">
+              <table class="admin-data-table">
+                <thead>
+                  <tr>
+                    <th>Pedido</th>
+                    <th>Cliente</th>
+                    <th>Fecha</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                    <th>Detalle</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-orders-table-body">
+                  <!-- Row listing -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Tab panel: Users -->
+          <div id="admin-tab-users" class="admin-tab-content" style="display: none;">
+            <div class="admin-table-container">
+              <table class="admin-data-table">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Contacto</th>
+                    <th>Deuda</th>
+                    <th>Crédito</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-users-table-body">
+                  <!-- Row listing -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Tab panel: Settings -->
+          <div id="admin-tab-settings" class="admin-tab-content" style="display: none;">
+            <form onsubmit="saveAdminSettings(event)">
+              <div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">
+                <label for="settings-games-toggle" style="margin-bottom:0;">Activar zona de minijuegos para clientes</label>
+                <input type="checkbox" id="settings-games-toggle" style="width: 24px; height: 24px; cursor: pointer;">
+              </div>
+              <div class="form-group">
+                <label for="settings-stock-limit">Límite para alerta de Stock Bajo (unidades)</label>
+                <input type="number" id="settings-stock-limit" min="1" required>
+              </div>
+              <button type="submit" class="btn-submit-form" style="background: var(--primary-glow)">Guardar Configuración ⚙️</button>
+            </form>
+          </div>
+
+        </main>
+      </div>
+
+    </div>
+
+  </div> <!-- End Viewport simulated Wrapper -->
+
+  <!-- ==================== SYSTEM MODALS (MODAL DIALOGS) ==================== -->
+
+  <!-- Modal: Shopping Cart Preview -->
+  <div class="system-modal" id="cart-modal">
+    <div class="modal-overlay" onclick="closeModal('cart-modal')"></div>
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">Mi Carrito 🛒</h3>
+        <button class="btn-close-modal" onclick="closeModal('cart-modal')">✕</button>
+      </div>
+      <div class="cart-items-list" id="cart-items-list">
+        <!-- Rendered items list -->
+      </div>
+      <button class="btn-submit-form" id="checkout-action-btn" onclick="proceedToCheckout()">Proceder a Pedido</button>
+    </div>
+  </div>
+
+  <!-- Modal: Checkout Form -->
+  <div class="system-modal centered-modal" id="checkout-form-modal">
+    <div class="modal-overlay" onclick="closeModal('checkout-form-modal')"></div>
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">Detalles del Pedido 📝</h3>
+        <button class="btn-close-modal" onclick="closeModal('checkout-form-modal')">✕</button>
+      </div>
+      
+      <div class="checkout-user-badge" id="checkout-user-badge" style="display:none;">
+        ✓ Sesión iniciada. Tus datos se han auto-rellenado.
+      </div>
+
+      <form onsubmit="submitOrder(event)">
+        <div class="form-group">
+          <label for="checkout-name">Nombre del Cliente *</label>
+          <input type="text" id="checkout-name" required placeholder="Nombre completo">
+        </div>
+        <div class="form-group">
+          <label for="checkout-phone">Número de Teléfono *</label>
+          <input type="tel" id="checkout-phone" required placeholder="Teléfono a 10 dígitos">
+        </div>
+        <div class="form-group">
+          <label for="checkout-city">Ciudad *</label>
+          <input type="text" id="checkout-city" required placeholder="Ciudad de destino">
+        </div>
+
+
+        <button type="submit" class="btn-submit-form">Enviar Pedido 🌸</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Order Success Confirmation -->
+  <div class="system-modal centered-modal" id="success-modal">
+    <div class="modal-overlay" onclick="closeModal('success-modal')"></div>
+    <div class="modal-sheet">
+      <div class="success-screen">
+        <span class="success-badge">🎉</span>
+        <h3 style="margin-bottom: 8px;">¡Pedido Realizado Exitosamente!</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.4; margin-bottom: 20px;">
+          Tu pedido ha sido enviado al sistema central.
+        </p>
+        <button class="btn-submit-form" style="background: rgba(255,255,255,0.06); color: white; border: 1px solid var(--glass-border); margin-top: 10px;" onclick="closeModal('success-modal')">Regresar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Client: Order Details Viewer -->
+  <div class="system-modal centered-modal" id="client-order-detail-modal">
+    <div class="modal-overlay" onclick="closeModal('client-order-detail-modal')"></div>
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">Pedido #<span id="client-order-detail-id"></span></h3>
+        <button class="btn-close-modal" onclick="closeModal('client-order-detail-modal')">✕</button>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <h4 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px;">Detalle de Productos</h4>
+        <div id="client-order-detail-items" style="font-size: 0.85rem; background: rgba(255,255,255,0.02); padding: 8px; border-radius: 8px;">
+          <!-- Products rows -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Admin: Product Edit/Create -->
+  <div class="system-modal centered-modal" id="admin-product-modal">
+    <div class="modal-overlay" onclick="closeModal('admin-product-modal')"></div>
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title" id="product-modal-title">Nuevo Producto</h3>
+        <button class="btn-close-modal" onclick="closeModal('admin-product-modal')">✕</button>
+      </div>
+      <form onsubmit="saveProduct(event)">
+        <input type="hidden" id="prod-form-id">
+        <input type="hidden" id="prod-form-image-data">
+
+        <div class="form-group">
+          <label>Fotografía del Producto</label>
+          <div class="image-upload-preview" id="prod-form-image-preview">
+            <span>Toca para seleccionar foto 📸</span>
+            <input type="file" accept="image/*" onchange="handleProductImageUpload(event)">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="prod-form-name">Nombre del Modelo</label>
+          <input type="text" id="prod-form-name" required placeholder="Ej. Rosal Blanco">
+        </div>
+
+        <div class="form-group">
+          <label for="prod-form-price">Precio por Unidad ($)</label>
+          <input type="number" id="prod-form-price" step="0.01" required placeholder="0.00">
+        </div>
+
+        <div class="form-group">
+          <label for="prod-form-stock">Cantidad en Inventario</label>
+          <input type="number" id="prod-form-stock" required placeholder="Cantidad de stock">
+        </div>
+
+        <div class="form-group">
+          <label for="prod-form-category">Categoría</label>
+          <select id="prod-form-category" required>
+            <!-- Llenado dinámicamente -->
+          </select>
+        </div>
+
+        <button type="submit" class="btn-submit-form" style="background: var(--primary-glow)">Guardar Cambios</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Admin: Credit Transaction Log -->
+  <div class="system-modal centered-modal" id="admin-credit-ledger-modal">
+    <div class="modal-overlay" onclick="closeModal('admin-credit-ledger-modal')"></div>
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">Crédito de <span id="credit-user-name"></span></h3>
+        <button class="btn-close-modal" onclick="closeModal('admin-credit-ledger-modal')">✕</button>
+      </div>
+      <p style="margin-bottom: 12px; font-size: 0.85rem;">
+        Límite de Crédito: <strong>$<span id="credit-user-limit">0.00</span></strong> | 
+        Deuda Registrada: <strong>$<span id="credit-user-debt">0.00</span></strong>
+      </p>
+      
+      <form onsubmit="saveCreditTransaction(event)">
+        <div class="form-group">
+          <label for="credit-trans-type">Tipo de Operación</label>
+          <select id="credit-trans-type" required>
+            <option value="abono">Abono (El cliente paga/disminuye deuda)</option>
+            <option value="cargo">Cargo (El cliente pide a crédito/aumenta deuda)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="credit-amount">Monto ($)</label>
+          <input type="number" id="credit-amount" step="0.01" required placeholder="0.00">
+        </div>
+
+        <div class="form-group">
+          <label for="credit-description">Concepto / Descripción</label>
+          <input type="text" id="credit-description" placeholder="Ej. Abono en efectivo / Pedido adicional">
+        </div>
+
+        <button type="submit" class="btn-submit-form" style="background: var(--primary-glow)">Registrar Movimiento 🏦</button>
+      </form>
+
+      <!-- Historial de movimientos del usuario -->
+      <div id="admin-credit-history-list" class="admin-history-list-container">
+        <!-- Renderizado dinámicamente en app.js -->
+      </div>
+
+      <div class="form-group" style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--glass-border);">
+        <label for="credit-limit-input">Modificar Límite de Crédito Autorizado ($)</label>
+        <div style="display: flex; gap: 8px;">
+          <input type="number" id="credit-limit-input" step="0.01" placeholder="Ej. 10000.00" style="flex-grow:1;">
+          <button type="button" class="btn-submit-form" style="width: auto; background: var(--success); padding: 10px 16px;" onclick="updateCreditLimitOnly()">Guardar Límite ⚙️</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Admin: Order Details Viewer -->
+  <div class="system-modal centered-modal" id="admin-order-detail-modal">
+    <div class="modal-overlay" onclick="closeModal('admin-order-detail-modal')"></div>
+    <div class="modal-sheet" style="max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header">
+        <h3 class="modal-title">Pedido #<span id="order-detail-id"></span></h3>
+        <button class="btn-close-modal" onclick="closeModal('admin-order-detail-modal')">✕</button>
+      </div>
+
+      <form id="admin-order-edit-form" onsubmit="saveOrderChanges(event)">
+        <div style="margin-bottom: 16px;">
+          <h4 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px;">Información del Cliente</h4>
+          <div class="form-group">
+            <label for="order-edit-name">Nombre</label>
+            <input type="text" id="order-edit-name" required>
+          </div>
+          <div class="form-group">
+            <label for="order-edit-phone">Teléfono</label>
+            <input type="tel" id="order-edit-phone" required>
+          </div>
+          <div class="form-group">
+            <label for="order-edit-city">Ciudad</label>
+            <input type="text" id="order-edit-city" required>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <h4 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px;">Detalle de Productos</h4>
+          <div id="order-detail-items" style="font-size: 0.85rem; background: rgba(255,255,255,0.02); padding: 8px; border-radius: 8px; margin-bottom: 8px;">
+            <!-- Products rows -->
+          </div>
+          <div class="form-group">
+            <label for="order-edit-total">Monto Total ($)</label>
+            <input type="number" id="order-edit-total" step="0.01" required>
+          </div>
+          <div class="form-group">
+            <label for="order-edit-payment">Método de Pago</label>
+            <select id="order-edit-payment" required>
+              <option value="pedido">Pedido (General)</option>
+              <option value="contado">Contado</option>
+              <option value="credito">Crédito</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="order-status-selector">Estado de Pedido</label>
+          <select id="order-status-selector">
+            <option value="pendiente">Pendiente</option>
+            <option value="completado">Completado</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-top: 20px;">
+          <button type="button" class="btn-submit-form" style="background: var(--danger); flex: 1;" onclick="deleteOrder()">Eliminar Pedido 🗑️</button>
+          <button type="submit" class="btn-submit-form" style="background: var(--primary-glow); flex: 1;">Guardar Cambios 💾</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="admin-toast-notification" class="toast-notification">Movimiento Registrado ✓</div>
+
+  <!-- Modal Admin: Categories Management -->
+  <div class="system-modal centered-modal" id="admin-categories-modal">
+    <div class="modal-overlay" onclick="closeModal('admin-categories-modal')"></div>
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">Gestionar Categorías 🏷️</h3>
+        <button class="btn-close-modal" onclick="closeModal('admin-categories-modal')">✕</button>
+      </div>
+
+      <form onsubmit="saveNewCategory(event)">
+        <div class="form-group" style="display: flex; gap: 8px; margin-bottom: 20px;">
+          <input type="text" id="new-category-name" required placeholder="Nombre de categoría" style="flex-grow: 1;">
+          <button type="submit" class="btn-submit-form" style="width: auto; padding: 0 16px; background: var(--primary-glow);">Añadir</button>
+        </div>
+      </form>
+
+      <div style="margin-bottom: 16px;">
+        <h4 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px;">Categorías Actuales</h4>
+        <div id="admin-categories-list" style="max-height: 250px; overflow-y: auto;">
+          <!-- Renderizado dinámicamente -->
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Modal Admin: Login Access -->
+  <div class="system-modal centered-modal" id="admin-login-modal">
+    <div class="modal-overlay" onclick="closeModal('admin-login-modal')"></div>
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">Acceso Administrador 🔒</h3>
+        <button class="btn-close-modal" onclick="closeModal('admin-login-modal')">✕</button>
+      </div>
+      <form onsubmit="loginAdmin(event)">
+        <div class="form-group">
+          <label for="admin-user-input">Usuario</label>
+          <input type="text" id="admin-user-input" required placeholder="Ingresa usuario">
+        </div>
+        <div class="form-group">
+          <label for="admin-pass-input">Contraseña</label>
+          <input type="password" id="admin-pass-input" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn-submit-form" style="background: var(--primary-glow)">Ingresar al Dashboard</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Script Resources -->
+  <script src="game.js"></script>
+  <script src="app.js"></script>
+  <script>
+    // Register PWA service worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').then((reg) => {
+          console.log('Service worker registered successfully', reg);
+        }).catch((err) => {
+          console.warn('Service worker registration failed', err);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
