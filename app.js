@@ -1219,16 +1219,48 @@ window.openEditProductModal = function(id) {
   openModal('admin-product-modal');
 };
 
-// Handle admin image uploads
+// Handle admin image uploads with compression
 window.handleProductImageUpload = function(event) {
   const file = event.target.files[0];
   if (!file) return;
 
   const reader = new FileReader();
   reader.onload = function(e) {
-    const base64 = e.target.result;
-    document.getElementById('prod-form-image-preview').style.backgroundImage = `url(${base64})`;
-    document.getElementById('prod-form-image-data').value = base64;
+    const img = new Image();
+    img.onload = function() {
+      // Compress image using canvas
+      const canvas = document.createElement('canvas');
+      const MAX_WIDTH = 300;
+      const MAX_HEIGHT = 300;
+      let width = img.width;
+      let height = img.height;
+
+      // Calculate new dimensions keeping aspect ratio
+      if (width > height) {
+        if (width > MAX_WIDTH) {
+          height = Math.round(height * (MAX_WIDTH / width));
+          width = MAX_WIDTH;
+        }
+      } else {
+        if (height > MAX_HEIGHT) {
+          width = Math.round(width * (MAX_HEIGHT / height));
+          height = MAX_HEIGHT;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      // Export as compressed JPEG (60% quality) for ultra-light payload
+      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+      
+      document.getElementById('prod-form-image-preview').style.backgroundImage = `url(${compressedBase64})`;
+      document.getElementById('prod-form-image-data').value = compressedBase64;
+    };
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 };
@@ -2029,6 +2061,20 @@ function initializeApp() {
   // Global listener for reactive sync
   window.addEventListener('db_updated', () => {
     // When DB is updated externally (e.g. syncFromCloud), sync ALL visual elements
+    
+    // Always: refresh active user session if logged in (credit/debt may have changed remotely)
+    if (state.currentUser) {
+      const users = AppDB.get('users') || [];
+      const refreshed = users.find(usr => usr.id === state.currentUser.id);
+      if (refreshed) {
+        state.currentUser = refreshed;
+        localStorage.setItem('flowers_active_session', JSON.stringify(refreshed));
+      }
+    }
+    
+    // Always: update the floating cart bar (product prices/stock may have changed)
+    updateGlobalCartBar();
+    
     if (state.currentView === 'client') {
       if (state.clientTab === 'catalog') {
         renderCatalog();
