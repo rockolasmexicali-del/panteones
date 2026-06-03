@@ -906,6 +906,9 @@ window.registerUser = function(e) {
 };
 
 window.logoutUser = function() {
+  if (!confirm("¿Estás seguro de que deseas cerrar tu sesión?")) {
+    return;
+  }
   state.currentUser = null;
   localStorage.removeItem('flowers_active_session');
   toggleProfileLogin();
