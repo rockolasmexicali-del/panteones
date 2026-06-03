@@ -481,10 +481,21 @@ function renderCatalog() {
     const badge = isCritical 
       ? `<span class="stock-badge critical">¡Solo quedan ${p.stock}! ⚡</span>`
       : `<span class="stock-badge">Stock: ${p.stock}</span>`;
+    const combinedName = (p.category && p.category !== 'todas' 
+      ? p.category.charAt(0).toUpperCase() + p.category.slice(1) + ' ' 
+      : '') + p.name;
+    const escapedName = combinedName.replace(/'/g, "\\'");
 
     return `
       <div class="product-card" id="prod-card-${p.id}" onclick="handleCardClick(event, ${p.id}, this)">
-        <div class="product-image-container">
+        <div class="product-image-container"
+             onmousedown="startImagePress('${p.image}', '${escapedName}')" 
+             onmouseup="cancelImagePress()" 
+             onmouseleave="cancelImagePress()"
+             ontouchstart="startImagePress('${p.image}', '${escapedName}')"
+             ontouchend="cancelImagePress()"
+             ontouchcancel="cancelImagePress()"
+             style="cursor: pointer;">
           <img src="${p.image}" alt="${p.name}" class="product-image" loading="lazy">
           ${badge}
           ${inCart > 0 ? `
@@ -496,7 +507,7 @@ function renderCatalog() {
           ` : ''}
         </div>
         <div class="product-info">
-          <h3 class="product-title">${p.category ? p.category.charAt(0).toUpperCase() + p.category.slice(1) + ' ' : ''}${p.name}</h3>
+          <h3 class="product-title">${combinedName}</h3>
           <p class="product-price">$${p.price.toFixed(2)}</p>
         </div>
       </div>
@@ -554,7 +565,34 @@ window.updateCartQty = function(id, diff, element = null) {
   renderCartModalContent();
 };
 
+let imagePressTimer = null;
+let isLongPressFired = false;
+
+window.startImagePress = function(src, title) {
+  isLongPressFired = false;
+  cancelImagePress();
+  imagePressTimer = setTimeout(() => {
+    isLongPressFired = true;
+    document.getElementById('fullscreen-image-element').src = src;
+    document.getElementById('fullscreen-image-title').innerText = title;
+    openModal('image-preview-modal');
+    if (navigator.vibrate) navigator.vibrate(50);
+  }, 500); // 500ms long press
+};
+
+window.cancelImagePress = function() {
+  if (imagePressTimer) {
+    clearTimeout(imagePressTimer);
+    imagePressTimer = null;
+  }
+};
+
 window.handleCardClick = function(event, id, cardEl) {
+  if (isLongPressFired) {
+    // Ignore the click if it was the end of a long press
+    setTimeout(() => { isLongPressFired = false; }, 100);
+    return;
+  }
   // If clicked inside the controller or add button, let their direct handlers execute
   if (event.target.closest('.quantity-controller') || event.target.closest('.btn-add-cart')) {
     return;
