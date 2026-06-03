@@ -1277,7 +1277,41 @@ window.filterAdminOrders = function(status) {
     btnCompleted.style = status === 'completado' ? activeStyle : inactiveStyle;
     btnCancelled.style = status === 'cancelado' ? activeStyle : inactiveStyle;
   }
+
+  const btnPrint = document.getElementById('btn-print-pending-orders');
+  const btnDelete = document.getElementById('btn-delete-completed-orders');
+  if (btnPrint && btnDelete) {
+    if (status === 'pendiente') {
+      btnPrint.style.display = 'block';
+      btnDelete.style.display = 'none';
+    } else if (status === 'completado') {
+      btnPrint.style.display = 'none';
+      btnDelete.style.display = 'block';
+    } else {
+      btnPrint.style.display = 'none';
+      btnDelete.style.display = 'none';
+    }
+  }
   
+  renderAdminOrders();
+};
+
+window.deleteCompletedOrders = function() {
+  const orders = AppDB.get('orders') || [];
+  const completedOrders = orders.filter(o => o.status === 'completado');
+  
+  if (completedOrders.length === 0) {
+    alert("No hay pedidos completados para eliminar.");
+    return;
+  }
+  
+  if (!confirm(`¿Estás seguro de que deseas eliminar permanentemente los ${completedOrders.length} pedidos completados? Esta acción se sincronizará con la base de datos.`)) {
+    return;
+  }
+  
+  const remaining = orders.filter(o => o.status !== 'completado');
+  AppDB.set('orders', remaining);
+  showToast(`Se eliminaron ${completedOrders.length} pedidos completados`);
   renderAdminOrders();
 };
 

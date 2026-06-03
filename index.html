@@ -164,11 +164,12 @@
 
           <!-- Tab panel: Orders -->
           <div id="admin-tab-orders" class="admin-tab-content" style="display: none;">
-            <div class="admin-actions-bar" style="display: flex; gap: 8px; margin-bottom: 16px; align-items: center; width: 100%;">
+            <div class="admin-actions-bar" style="display: flex; gap: 8px; margin-bottom: 16px; align-items: center; width: 100%; justify-content: flex-start;">
               <button id="btn-order-filter-pendiente" class="btn-admin-add" onclick="filterAdminOrders('pendiente')">Pendientes 🔔</button>
               <button id="btn-order-filter-completado" class="btn-admin-add" style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-primary);" onclick="filterAdminOrders('completado')">Completados ✓</button>
               <button id="btn-order-filter-cancelado" class="btn-admin-add" style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-primary);" onclick="filterAdminOrders('cancelado')">Cancelados ❌</button>
               <button id="btn-print-pending-orders" class="btn-admin-add" style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #10b981; margin-left: auto;" onclick="printPendingOrders()">Imprimir Pendientes 🖨️</button>
+              <button id="btn-delete-completed-orders" class="btn-admin-add" style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; margin-left: auto; display: none;" onclick="deleteCompletedOrders()">Borrar Completados 🗑️</button>
             </div>
             <div class="admin-table-container">
               <table class="admin-data-table">

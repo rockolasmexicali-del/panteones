@@ -934,9 +934,45 @@ select option {
   gap: 16px;
 }
 
-@media(min-width: 768px) {
-  #app-viewport-wrapper.admin-mode {
-    max-width: 100%; /* Expand to full width layout if it's admin role */
+#app-viewport-wrapper.admin-mode {
+  max-width: 100% !important;
+}
+
+@media (max-width: 767px) {
+  .admin-main-container {
+    flex-direction: column; /* Coloca la barra de navegación arriba */
+  }
+  .admin-sidebar {
+    width: 100% !important;
+    height: auto !important;
+    flex-direction: row !important; /* Barra de navegación horizontal */
+    justify-content: space-around !important;
+    padding: 8px 0 !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+  }
+  .admin-sidebar-link {
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 1.2rem !important;
+  }
+  .admin-content-area {
+    padding: 12px !important;
+  }
+  .admin-header {
+    flex-direction: column !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+    text-align: center !important;
+  }
+  .admin-header .brand-title {
+    font-size: 1.2rem !important;
+  }
+  .admin-dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .admin-table-container {
+    overflow-x: auto !important; /* Permite scroll horizontal en las tablas */
   }
 }
 
