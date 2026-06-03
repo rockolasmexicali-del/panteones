@@ -1998,15 +1998,20 @@ function initializeApp() {
   
   // Global listener for reactive sync
   window.addEventListener('db_updated', () => {
-    // When DB is updated externally, sync visual elements if visible
+    // When DB is updated externally (e.g. syncFromCloud), sync ALL visual elements
     if (state.currentView === 'client') {
-      if (state.clientTab === 'catalog') renderCatalog();
+      if (state.clientTab === 'catalog') {
+        renderCatalog();
+        renderCategoryFilters();
+      }
       if (state.clientTab === 'profile') toggleProfileLogin();
     } else {
       if (state.adminTab === 'overview') renderAdminOverview();
       if (state.adminTab === 'products') renderAdminProducts();
       if (state.adminTab === 'orders') renderAdminOrders();
       if (state.adminTab === 'users') renderAdminUsers();
+      // Refresh category list if the modal is open
+      renderAdminCategoriesList();
     }
   });
 
