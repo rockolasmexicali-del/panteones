@@ -405,7 +405,11 @@ function getCartItems() {
     const p = products.find(prod => prod.id == id);
     if (p && qty > 0) {
       const itemTotal = p.price * qty;
-      items.push({ ...p, qty, itemTotal });
+      const catPrefix = (p.category && p.category !== 'todas') 
+        ? p.category.charAt(0).toUpperCase() + p.category.slice(1) + ' ' 
+        : '';
+      const combinedName = catPrefix + p.name;
+      items.push({ ...p, name: combinedName, qty, itemTotal });
       total += itemTotal;
     }
   }
@@ -492,7 +496,7 @@ function renderCatalog() {
           ` : ''}
         </div>
         <div class="product-info">
-          <h3 class="product-title">${p.name}</h3>
+          <h3 class="product-title">${p.category ? p.category.charAt(0).toUpperCase() + p.category.slice(1) + ' ' : ''}${p.name}</h3>
           <p class="product-price">$${p.price.toFixed(2)}</p>
         </div>
       </div>
