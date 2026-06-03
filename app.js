@@ -110,7 +110,7 @@ async function syncFromCloud() {
 
     // 2. Fetch products
     const { data: products } = await supabaseClient.from('products').select('*').order('id', { ascending: true });
-    if (products && products.length > 0) {
+    if (products) {
       localStorage.setItem('flowers_products', JSON.stringify(products));
     }
 
@@ -147,6 +147,15 @@ async function syncFromCloud() {
         date: o.date
       }));
       localStorage.setItem('flowers_orders', JSON.stringify(mappedOrders));
+    }
+
+    // 5. Fetch settings
+    const { data: settings } = await supabaseClient.from('settings').select('*').eq('id', 'app_settings').single();
+    if (settings) {
+      localStorage.setItem('flowers_settings', JSON.stringify({
+        gamesEnabled: settings.games_enabled,
+        criticalStockThreshold: settings.critical_stock_threshold
+      }));
     }
 
     // Dispatch event to refresh views
@@ -203,7 +212,7 @@ async function syncToCloud(key, val, oldVal) {
           email: u.email,
           debt: u.debt || 0,
           credit_limit: u.creditLimit || 5000,
-          credit_history: u.credit_history || []
+          credit_history: u.creditHistory || []
         }));
         await supabaseClient.from('users').upsert(mapped);
       }
@@ -240,6 +249,13 @@ async function syncToCloud(key, val, oldVal) {
         const mapped = val.map(c => ({ name: c }));
         await supabaseClient.from('categories').upsert(mapped);
       }
+    } else if (key === 'settings') {
+      // Sync settings as a single row
+      await supabaseClient.from('settings').upsert({
+        id: 'app_settings',
+        games_enabled: val.gamesEnabled,
+        critical_stock_threshold: val.criticalStockThreshold
+      });
     }
   } catch (err) {
     console.error(`Error syncing ${key} to Supabase:`, err);
@@ -2005,11 +2021,13 @@ function initializeApp() {
         renderCategoryFilters();
       }
       if (state.clientTab === 'profile') toggleProfileLogin();
+      if (state.clientTab === 'game') renderGameTab();
     } else {
       if (state.adminTab === 'overview') renderAdminOverview();
       if (state.adminTab === 'products') renderAdminProducts();
       if (state.adminTab === 'orders') renderAdminOrders();
       if (state.adminTab === 'users') renderAdminUsers();
+      if (state.adminTab === 'settings') renderAdminSettings();
       // Refresh category list if the modal is open
       renderAdminCategoriesList();
     }
