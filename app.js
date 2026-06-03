@@ -1881,7 +1881,7 @@ window.printPendingOrders = function() {
 };
 
 // Initial document triggers
-document.addEventListener('DOMContentLoaded', () => {
+function initializeApp() {
   // Sync view states based on URL path/hash/search parameter
   const isAdminRoute = window.location.hash === '#admin' || 
                        window.location.search.includes('admin') || 
@@ -1965,4 +1965,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }, { passive: true });
   }
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+  initializeApp();
+}
