@@ -44,12 +44,7 @@
           </div>
         </div>
 
-        <!-- CLIENT TAB: GAMES -->
-        <div id="client-tab-game" class="client-tab-view" style="display: none;">
-          <div id="games-tab-content">
-            <!-- Game Canvas or block settings -->
-          </div>
-        </div>
+
 
         <!-- CLIENT TAB: USER PROFILE / LEDGER -->
         <div id="client-tab-profile" class="client-tab-view" style="display: none;">
@@ -86,10 +81,7 @@
           <span class="nav-icon">💐</span>
           <span>Flores</span>
         </button>
-        <button class="nav-bar-item" data-tab="game" onclick="switchClientTab('game')">
-          <span class="nav-icon">🎮</span>
-          <span>Diversión</span>
-        </button>
+
         <button class="nav-bar-item" data-tab="profile" onclick="switchClientTab('profile')">
           <span class="nav-icon">👤</span>
           <span>Mi Cuenta</span>
@@ -530,8 +522,26 @@
 
   <!-- Script Resources -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="game.js?v=4"></script>
-  <script src="app.js?v=4"></script>
+  <script>
+    (function() {
+      const isLocalFile = window.location.protocol === 'file:';
+      const versionSuffix = isLocalFile ? '' : '?v=' + Date.now();
+      
+      function loadScript(src) {
+        return new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = src + versionSuffix;
+          script.onload = resolve;
+          script.onerror = reject;
+          document.body.appendChild(script);
+        });
+      }
+      
+      // Load app.js directly
+      loadScript('app.js')
+        .catch(err => console.error("Error loading app.js:", err));
+    })();
+  </script>
   <script>
     // Remove service worker to force updates immediately
     if ('serviceWorker' in navigator) {

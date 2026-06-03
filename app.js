@@ -35,10 +35,10 @@ const DEFAULT_CATEGORIES = ["Rosas", "Tulipanes", "Girasoles", "Orquideas", "Fol
 
 const SUPABASE_URL = "https://viwvfkiinycvppiknfta.supabase.co";
 const SUPABASE_KEY = "sb_publishable_G5XUi3TX8nGPmd4_muEusw_v88oN7T4";
-let supabase = null;
+let supabaseClient = null;
 try {
   if (window.supabase && window.supabase.createClient) {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   }
 } catch (err) {
   console.warn("Supabase init failed, running in offline mode:", err);
@@ -46,21 +46,35 @@ try {
 
 class AppDB {
   static init() {
-    if (localStorage.getItem('flowers_db_version') !== '1.2') {
-      localStorage.setItem('flowers_products', JSON.stringify(DEFAULT_PRODUCTS));
-      localStorage.setItem('flowers_users', JSON.stringify(DEFAULT_USERS));
-      localStorage.setItem('flowers_orders', JSON.stringify(DEFAULT_ORDERS));
-      localStorage.setItem('flowers_settings', JSON.stringify(DEFAULT_SETTINGS));
-      localStorage.setItem('flowers_categories', JSON.stringify(DEFAULT_CATEGORIES));
-      localStorage.setItem('flowers_db_version', '1.2');
+    try {
+      if (localStorage.getItem('flowers_db_version') !== '1.2') {
+        localStorage.setItem('flowers_products', JSON.stringify(DEFAULT_PRODUCTS));
+        localStorage.setItem('flowers_users', JSON.stringify(DEFAULT_USERS));
+        localStorage.setItem('flowers_orders', JSON.stringify(DEFAULT_ORDERS));
+        localStorage.setItem('flowers_settings', JSON.stringify(DEFAULT_SETTINGS));
+        localStorage.setItem('flowers_categories', JSON.stringify(DEFAULT_CATEGORIES));
+        localStorage.setItem('flowers_db_version', '1.2');
+      }
+      // Upgrade path for users missing categories
+      if (!localStorage.getItem('flowers_categories')) {
+        localStorage.setItem('flowers_categories', JSON.stringify(DEFAULT_CATEGORIES));
+      }
+    } catch (err) {
+      console.error("Error setting default localStorage keys:", err);
     }
-    // Upgrade path for users missing categories
-    if (!localStorage.getItem('flowers_categories')) {
-      localStorage.setItem('flowers_categories', JSON.stringify(DEFAULT_CATEGORIES));
+    
+    try {
+      // Sync from cloud and listen for real-time changes
+      syncFromCloud().catch(err => console.error("syncFromCloud failed:", err));
+    } catch (err) {
+      console.error("Failed to start syncFromCloud:", err);
     }
-    // Sync from cloud and listen for real-time changes
-    syncFromCloud();
-    setupRealtime();
+
+    try {
+      setupRealtime();
+    } catch (err) {
+      console.error("Failed to setup realtime channel:", err);
+    }
   }
 
   static get(key) {
@@ -79,22 +93,22 @@ class AppDB {
 }
 
 async function syncFromCloud() {
-  if (!supabase) return;
+  if (!supabaseClient) return;
   try {
     // 1. Fetch categories
-    const { data: categories } = await supabase.from('categories').select('name');
+    const { data: categories } = await supabaseClient.from('categories').select('name');
     if (categories && categories.length > 0) {
       localStorage.setItem('flowers_categories', JSON.stringify(categories.map(c => c.name)));
     }
 
     // 2. Fetch products
-    const { data: products } = await supabase.from('products').select('*').order('id', { ascending: true });
+    const { data: products } = await supabaseClient.from('products').select('*').order('id', { ascending: true });
     if (products && products.length > 0) {
       localStorage.setItem('flowers_products', JSON.stringify(products));
     }
 
     // 3. Fetch users
-    const { data: users } = await supabase.from('users').select('*');
+    const { data: users } = await supabaseClient.from('users').select('*');
     if (users) {
       const mappedUsers = users.map(u => ({
         id: u.id,
@@ -111,7 +125,7 @@ async function syncFromCloud() {
     }
 
     // 4. Fetch orders
-    const { data: orders } = await supabase.from('orders').select('*');
+    const { data: orders } = await supabaseClient.from('orders').select('*');
     if (orders) {
       const mappedOrders = orders.map(o => ({
         id: o.id,
@@ -136,7 +150,7 @@ async function syncFromCloud() {
 }
 
 async function syncToCloud(key, val, oldVal) {
-  if (!supabase) return;
+  if (!supabaseClient) return;
   try {
     if (key === 'orders') {
       // Check for deleted orders
@@ -144,7 +158,7 @@ async function syncToCloud(key, val, oldVal) {
         const activeIds = new Set(val.map(item => String(item.id)));
         const deletedItems = oldVal.filter(item => !activeIds.has(String(item.id)));
         for (const item of deletedItems) {
-          await supabase.from('orders').delete().eq('id', item.id);
+          await supabaseClient.from('orders').delete().eq('id', item.id);
         }
       }
       if (val.length > 0) {
@@ -160,7 +174,7 @@ async function syncToCloud(key, val, oldVal) {
           status: o.status,
           date: o.date
         }));
-        await supabase.from('orders').upsert(mapped);
+        await supabaseClient.from('orders').upsert(mapped);
       }
     } else if (key === 'users') {
       // Check for deleted users
@@ -168,7 +182,7 @@ async function syncToCloud(key, val, oldVal) {
         const activeIds = new Set(val.map(item => String(item.id)));
         const deletedItems = oldVal.filter(item => !activeIds.has(String(item.id)));
         for (const item of deletedItems) {
-          await supabase.from('users').delete().eq('id', item.id);
+          await supabaseClient.from('users').delete().eq('id', item.id);
         }
       }
       if (val.length > 0) {
@@ -183,7 +197,7 @@ async function syncToCloud(key, val, oldVal) {
           credit_limit: u.creditLimit || 5000,
           credit_history: u.credit_history || []
         }));
-        await supabase.from('users').upsert(mapped);
+        await supabaseClient.from('users').upsert(mapped);
       }
     } else if (key === 'products') {
       // Check for deleted products
@@ -191,7 +205,7 @@ async function syncToCloud(key, val, oldVal) {
         const activeIds = new Set(val.map(item => String(item.id)));
         const deletedItems = oldVal.filter(item => !activeIds.has(String(item.id)));
         for (const item of deletedItems) {
-          await supabase.from('products').delete().eq('id', item.id);
+          await supabaseClient.from('products').delete().eq('id', item.id);
         }
       }
       if (val.length > 0) {
@@ -203,7 +217,7 @@ async function syncToCloud(key, val, oldVal) {
           category: p.category,
           image: p.image
         }));
-        await supabase.from('products').upsert(mapped);
+        await supabaseClient.from('products').upsert(mapped);
       }
     } else if (key === 'categories') {
       // Check for deleted categories
@@ -211,12 +225,12 @@ async function syncToCloud(key, val, oldVal) {
         const activeIds = new Set(val.map(item => String(item)));
         const deletedItems = oldVal.filter(item => !activeIds.has(String(item)));
         for (const item of deletedItems) {
-          await supabase.from('categories').delete().eq('name', item);
+          await supabaseClient.from('categories').delete().eq('name', item);
         }
       }
       if (val.length > 0) {
         const mapped = val.map(c => ({ name: c }));
-        await supabase.from('categories').upsert(mapped);
+        await supabaseClient.from('categories').upsert(mapped);
       }
     }
   } catch (err) {
@@ -225,15 +239,19 @@ async function syncToCloud(key, val, oldVal) {
 }
 
 function setupRealtime() {
-  if (!supabase) return;
-  supabase.channel('schema-db-changes')
+  if (!supabaseClient) return;
+  supabaseClient.channel('schema-db-changes')
     .on('postgres_changes', { event: '*', schema: 'public' }, () => {
       syncFromCloud();
     })
     .subscribe();
 }
 
-AppDB.init();
+try {
+  AppDB.init();
+} catch (e) {
+  console.error("Critical error during AppDB.init():", e);
+}
 
 // --- RETRO AUDIO SYNTHESIS ENGINE ---
 let audioCtx = null;
