@@ -343,9 +343,18 @@
 
         <div class="form-group">
           <label>Fotografía del Producto</label>
-          <div class="image-upload-preview" id="prod-form-image-preview">
-            <span>Toca para seleccionar foto 📸</span>
-            <input type="file" accept="image/*" onchange="handleProductImageUpload(event)">
+          <div class="image-upload-preview" id="prod-form-image-preview" style="height: 140px;">
+            <span style="font-size: 0.85rem; opacity: 0.5;">Vista previa de imagen 🌸</span>
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 8px;">
+            <label class="btn-admin-add" style="flex: 1; text-align: center; font-size: 0.8rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); padding: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; border-radius: 8px; font-weight: normal; color: var(--text-primary);">
+              <span>📁 Galería</span>
+              <input type="file" accept="image/*" onchange="handleProductImageUpload(event)" style="display: none;">
+            </label>
+            <label class="btn-admin-add" style="flex: 1; text-align: center; font-size: 0.8rem; background: rgba(139, 92, 246, 0.15); border: 1px solid var(--primary-glow); padding: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; border-radius: 8px; font-weight: normal; color: white;">
+              <span>📸 Cámara</span>
+              <input type="file" accept="image/*" capture="environment" onchange="handleProductImageUpload(event)" style="display: none;">
+            </label>
           </div>
         </div>
 
