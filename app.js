@@ -602,15 +602,22 @@ function renderCatalog() {
     }).join('');
   }
 
-  // Restaurar posiciones de scroll después del re-renderizado
+  // Restaurar posiciones de scroll después del re-renderizado sin animaciones visuales
   if (mainScrollContainer) {
+    const originalMainBehavior = mainScrollContainer.style.scrollBehavior;
+    mainScrollContainer.style.scrollBehavior = 'auto';
     mainScrollContainer.scrollTop = mainScrollTop;
+    mainScrollContainer.style.scrollBehavior = originalMainBehavior;
   }
+
   const newHorizontalRows = listEl.querySelectorAll('.category-row-horizontal');
   newHorizontalRows.forEach(row => {
     const cat = row.getAttribute('data-category');
     if (cat && horizontalScrolls[cat] !== undefined) {
+      const originalRowBehavior = row.style.scrollBehavior;
+      row.style.scrollBehavior = 'auto';
       row.scrollLeft = horizontalScrolls[cat];
+      row.style.scrollBehavior = originalRowBehavior;
     }
   });
 }
