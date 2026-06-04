@@ -2728,48 +2728,7 @@ function initializeApp() {
     }
   });
 
-  // Swipe gestures to switch categories on mobile
-  const catalogContainer = document.getElementById('client-product-list');
-  if (catalogContainer) {
-    let touchStartX = 0;
-    let touchStartY = 0;
 
-    catalogContainer.addEventListener('touchstart', (e) => {
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-    }, { passive: true });
-
-    catalogContainer.addEventListener('touchend', (e) => {
-      const touchEndX = e.changedTouches[0].clientX;
-      const touchEndY = e.changedTouches[0].clientY;
-      const diffX = touchEndX - touchStartX;
-      const diffY = touchEndY - touchStartY;
-
-      // Si estamos en la vista agrupada ('todas'), deshabilitar el gesto de swipe
-      // para que no interfiera con el scroll horizontal de los productos.
-      const isSearchActive = (state.searchTerm || '').trim().length > 0;
-      if (state.selectedCategory === 'todas' && !isSearchActive) {
-        return; 
-      }
-
-      // Detect horizontal swipe gesture
-      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 60) {
-        const products = AppDB.get('products') || [];
-        const categories = ['todas', ...new Set(products.map(p => p.category))];
-        const currentIndex = categories.indexOf(state.selectedCategory);
-
-        if (diffX < 0) {
-          // Swiped Left -> Next category
-          const nextIndex = (currentIndex + 1) % categories.length;
-          selectCategory(categories[nextIndex]);
-        } else {
-          // Swiped Right -> Previous category
-          const prevIndex = (currentIndex - 1 + categories.length) % categories.length;
-          selectCategory(categories[prevIndex]);
-        }
-      }
-    }, { passive: true });
-  }
 }
 
 if (document.readyState === 'loading') {
