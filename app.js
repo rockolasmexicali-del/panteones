@@ -397,7 +397,8 @@ const state = {
   currentPreviewProductId: null,
   visibleProductIds: [],
   adminProductSearchTerm: '',
-  adminProductSort: ''
+  adminProductSort: '',
+  adminUserSearchTerm: ''
 };
 
 // Helper: Get cart details
@@ -458,6 +459,47 @@ function animateToCart(originElement, totalElementId) {
 
 // --- RENDERING ROUTINES ---
 
+// Helper para generar el HTML de una tarjeta de producto
+function generateProductCardHTML(p, inCart, settings) {
+  const isCritical = p.stock <= settings.criticalStockThreshold;
+  const badge = isCritical 
+    ? `<span class="stock-badge critical">¡Solo quedan ${p.stock}! ⚡</span>`
+    : `<span class="stock-badge">Stock: ${p.stock}</span>`;
+  const combinedName = (p.category && p.category !== 'todas' 
+    ? p.category.charAt(0).toUpperCase() + p.category.slice(1) + ' ' 
+    : '') + p.name;
+  const escapedName = combinedName.replace(/'/g, "\\'");
+
+  return `
+    <div class="product-card" id="prod-card-${p.id}" onclick="handleCardClick(event, ${p.id}, this)">
+      <div class="product-image-container"
+           onmousedown="startImagePress(${p.id})" 
+           onmouseup="cancelImagePress()" 
+           onmouseleave="cancelImagePress()"
+           ontouchstart="startImagePress(${p.id})"
+           ontouchmove="cancelImagePress()"
+           ontouchend="cancelImagePress()"
+           ontouchcancel="cancelImagePress()"
+           oncontextmenu="event.preventDefault(); return false;"
+           style="cursor: pointer; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;">
+        <img src="${p.image}" alt="${p.name}" class="product-image" loading="lazy" oncontextmenu="event.preventDefault(); return false;" style="-webkit-touch-callout: none; -webkit-user-select: none; user-select: none;">
+        ${badge}
+        ${inCart > 0 ? `
+          <div class="quantity-controller floating-overlay">
+            <button onclick="updateCartQty(${p.id}, -1)" class="btn-qty">-</button>
+            <span class="qty-display">${inCart}</span>
+            <button onclick="updateCartQty(${p.id}, 1, this)" class="btn-qty" ${inCart >= p.stock ? 'disabled' : ''}>+</button>
+          </div>
+        ` : ''}
+      </div>
+      <div class="product-info">
+        <h3 class="product-title">${combinedName}</h3>
+        <p class="product-price">$${p.price.toFixed(2)}</p>
+      </div>
+    </div>
+  `;
+}
+
 // Render client flower listing
 function renderCatalog() {
   const listEl = document.getElementById('client-product-list');
@@ -466,61 +508,85 @@ function renderCatalog() {
   const products = AppDB.get('products') || [];
   const settings = AppDB.get('settings') || {};
 
-  // Filter based on search & category
-  const filtered = products.filter(p => {
-    if (p.stock <= 0) return false; // Invisible if stock = 0
-    const matchesSearch = p.name.toLowerCase().includes(state.searchTerm.toLowerCase());
-    const matchesCategory = state.selectedCategory === 'todas' || p.category === state.selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  // Solo productos con stock > 0
+  const availableProducts = products.filter(p => p.stock > 0);
 
-  state.visibleProductIds = filtered.map(p => p.id);
-
-  if (filtered.length === 0) {
+  if (availableProducts.length === 0) {
+    listEl.className = 'product-grid';
     listEl.innerHTML = `<div class="no-products-msg">No hay modelos disponibles de momento 🌸</div>`;
     return;
   }
 
-  listEl.innerHTML = filtered.map(p => {
-    const inCart = state.cart[p.id] || 0;
-    const isCritical = p.stock <= settings.criticalStockThreshold;
-    const badge = isCritical 
-      ? `<span class="stock-badge critical">¡Solo quedan ${p.stock}! ⚡</span>`
-      : `<span class="stock-badge">Stock: ${p.stock}</span>`;
-    const combinedName = (p.category && p.category !== 'todas' 
-      ? p.category.charAt(0).toUpperCase() + p.category.slice(1) + ' ' 
-      : '') + p.name;
-    const escapedName = combinedName.replace(/'/g, "\\'");
+  const isSearchActive = (state.searchTerm || '').trim().length > 0;
+  const isAllCategories = state.selectedCategory === 'todas';
 
-    return `
-      <div class="product-card" id="prod-card-${p.id}" onclick="handleCardClick(event, ${p.id}, this)">
-        <div class="product-image-container"
-             onmousedown="startImagePress(${p.id})" 
-             onmouseup="cancelImagePress()" 
-             onmouseleave="cancelImagePress()"
-             ontouchstart="startImagePress(${p.id})"
-             ontouchmove="cancelImagePress()"
-             ontouchend="cancelImagePress()"
-             ontouchcancel="cancelImagePress()"
-             oncontextmenu="event.preventDefault(); return false;"
-             style="cursor: pointer; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;">
-          <img src="${p.image}" alt="${p.name}" class="product-image" loading="lazy" oncontextmenu="event.preventDefault(); return false;" style="-webkit-touch-callout: none; -webkit-user-select: none; user-select: none;">
-          ${badge}
-          ${inCart > 0 ? `
-            <div class="quantity-controller floating-overlay">
-              <button onclick="updateCartQty(${p.id}, -1)" class="btn-qty">-</button>
-              <span class="qty-display">${inCart}</span>
-              <button onclick="updateCartQty(${p.id}, 1, this)" class="btn-qty" ${inCart >= p.stock ? 'disabled' : ''}>+</button>
-            </div>
-          ` : ''}
+  if (isAllCategories && !isSearchActive) {
+    // Layout agrupado por categorías con scroll horizontal
+    listEl.className = 'product-grouped-list';
+    
+    // Group products by category
+    const grouped = {};
+    availableProducts.forEach(p => {
+      const cat = p.category || 'otros';
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(p);
+    });
+
+    let html = '';
+    
+    const getCategoryIcon = (cat) => {
+      switch(cat) {
+        case 'plato': return '🍽️';
+        case 'rosal': return '🌹';
+        case 'obelisco': return '🏛️';
+        case 'cruz': return '✝️';
+        case 'corazon': return '❤️';
+        default: return '🌸';
+      }
+    };
+
+    // Renderizar sección por cada categoría
+    for (const cat in grouped) {
+      if (grouped[cat].length === 0) continue;
+      const catName = cat.charAt(0).toUpperCase() + cat.slice(1);
+      html += `
+        <div class="category-section">
+          <h2 class="category-section-title">${getCategoryIcon(cat)} ${catName}</h2>
+          <div class="category-row-horizontal">
+            ${grouped[cat].map(p => {
+              const inCart = state.cart[p.id] || 0;
+              return generateProductCardHTML(p, inCart, settings);
+            }).join('')}
+          </div>
         </div>
-        <div class="product-info">
-          <h3 class="product-title">${combinedName}</h3>
-          <p class="product-price">$${p.price.toFixed(2)}</p>
-        </div>
-      </div>
-    `;
-  }).join('');
+      `;
+    }
+    
+    listEl.innerHTML = html;
+    state.visibleProductIds = availableProducts.map(p => p.id);
+
+  } else {
+    // Layout original en Grid
+    listEl.className = 'product-grid';
+    
+    const filtered = availableProducts.filter(p => {
+      const matchesSearch = p.name.toLowerCase().includes(state.searchTerm.toLowerCase());
+      const matchesCategory = isAllCategories || p.category === state.selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+
+    state.visibleProductIds = filtered.map(p => p.id);
+
+    if (filtered.length === 0) {
+      listEl.innerHTML = `<div class="no-products-msg">No se encontraron productos para tu búsqueda 🌸</div>`;
+      return;
+    }
+
+    listEl.innerHTML = filtered.map(p => {
+      const inCart = state.cart[p.id] || 0;
+      return generateProductCardHTML(p, inCart, settings);
+    }).join('');
+  }
 }
 
 // Render category filter chips
@@ -1396,6 +1462,9 @@ function switchAdminTab(tab) {
     else l.classList.remove('active');
   });
 
+  // Reset search filter on tab switch
+  state.adminUserSearchTerm = '';
+
   // Hide all contents
   const contents = document.querySelectorAll('.admin-tab-content');
   contents.forEach(c => c.style.display = 'none');
@@ -1944,10 +2013,41 @@ window.deleteOrder = function() {
 // Admin Tab: Users & Credits Ledger
 function renderAdminUsers() {
   const users = AppDB.get('users') || [];
+  
+  // Sincronizar campo de búsqueda
+  const searchInput = document.getElementById('admin-users-search');
+  if (searchInput && document.activeElement !== searchInput) {
+    searchInput.value = state.adminUserSearchTerm;
+  }
+
+  // Calcular totales generales
+  const totalLimit = users.reduce((acc, u) => acc + (u.creditLimit || 0), 0);
+  const totalDebt = users.reduce((acc, u) => acc + (u.debt || 0), 0);
+
+  const limitEl = document.getElementById('admin-users-total-limit');
+  const debtEl = document.getElementById('admin-users-total-debt');
+  if (limitEl) limitEl.innerText = `$${totalLimit.toFixed(2)}`;
+  if (debtEl) debtEl.innerText = `$${totalDebt.toFixed(2)}`;
+
+  // Filtrar según búsqueda
+  let filteredUsers = users;
+  const query = (state.adminUserSearchTerm || '').toLowerCase().trim();
+  if (query) {
+    filteredUsers = users.filter(u => 
+      (u.name || '').toLowerCase().includes(query) || 
+      (u.alias || '').toLowerCase().includes(query)
+    );
+  }
+
   const listEl = document.getElementById('admin-users-table-body');
   if (!listEl) return;
 
-  listEl.innerHTML = users.map(u => `
+  if (filteredUsers.length === 0) {
+    listEl.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-secondary); padding: 20px;">No se encontraron usuarios.</td></tr>`;
+    return;
+  }
+
+  listEl.innerHTML = filteredUsers.map(u => `
     <tr>
       <td>
         <strong>${u.name}</strong>
@@ -1970,6 +2070,11 @@ function renderAdminUsers() {
     </tr>
   `).join('');
 }
+
+window.handleAdminUserSearch = function(val) {
+  state.adminUserSearchTerm = val;
+  renderAdminUsers();
+};
 
 window.openEditUserModal = function(userId) {
   const users = AppDB.get('users') || [];

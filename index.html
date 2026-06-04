@@ -198,6 +198,29 @@
 
           <!-- Tab panel: Users -->
           <div id="admin-tab-users" class="admin-tab-content" style="display: none;">
+            <!-- Nueva cabecera con totales y barra de búsqueda -->
+            <div class="admin-users-header-summary" style="margin-bottom: 20px;">
+              <div class="admin-dashboard-grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                <div class="admin-metric-card">
+                  <div class="metric-details">
+                    <h4>Límite General Total</h4>
+                    <span class="number" id="admin-users-total-limit">$0.00</span>
+                  </div>
+                  <div class="metric-icon">🏦</div>
+                </div>
+                <div class="admin-metric-card">
+                  <div class="metric-details">
+                    <h4>Total Prestado (Deuda)</h4>
+                    <span class="number" id="admin-users-total-debt" style="color: var(--warning);">$0.00</span>
+                  </div>
+                  <div class="metric-icon">💸</div>
+                </div>
+              </div>
+              <div class="admin-actions-bar" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: flex-start;">
+                <input type="text" id="admin-users-search" class="search-input" placeholder="Buscar por nombre o alias..." oninput="handleAdminUserSearch(this.value)" style="max-width: 320px; padding: 8px 12px; font-size: 0.85rem; height: 38px;">
+              </div>
+            </div>
+
             <div class="admin-table-container">
               <table class="admin-data-table">
                 <thead>

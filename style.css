@@ -164,6 +164,50 @@ body {
   padding-bottom: 90px; /* Space for float bar */
 }
 
+/* Layout agrupado de categorías (scroll horizontal) */
+.product-grouped-list {
+  padding-bottom: 90px; /* Espacio para barra flotante */
+}
+
+.category-section {
+  margin-top: 8px;
+  margin-bottom: 24px;
+}
+
+.category-section-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  padding: 0 16px;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, var(--text-primary) 30%, var(--primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.category-row-horizontal {
+  display: flex;
+  overflow-x: auto;
+  gap: 12px;
+  padding: 4px 16px 16px 16px;
+  scrollbar-width: none; /* Firefox */
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.category-row-horizontal::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+/* Tarjetas deslizables con ancho fijo */
+.category-row-horizontal .product-card {
+  width: 145px;
+  min-width: 145px;
+  flex: 0 0 auto;
+}
+
 .product-card {
   background: var(--bg-card);
   border: 1px solid var(--glass-border);
