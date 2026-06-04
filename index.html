@@ -145,16 +145,17 @@
 
           <!-- Tab panel: Products -->
           <div id="admin-tab-products" class="admin-tab-content" style="display: none;">
-            <div class="admin-actions-bar" style="display: flex; gap: 8px;">
+            <div class="admin-actions-bar" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
               <button class="btn-admin-add" onclick="openAddProductModal()">+ Añadir Modelo 🌸</button>
               <button class="btn-admin-add" onclick="openCategoriesModal()" style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-primary);">+ Gestionar Categorías 🏷️</button>
+              <input type="text" id="admin-product-search" class="search-input" placeholder="Buscar por categoría o modelo..." oninput="handleAdminProductSearch(this.value)" style="margin-left: auto; max-width: 250px; padding: 8px 12px; font-size: 0.85rem; height: 38px;">
             </div>
             <div class="admin-table-container">
               <table class="admin-data-table">
                 <thead>
                   <tr>
                     <th>Foto</th>
-                    <th>Modelo</th>
+                    <th onclick="toggleAdminProductCategorySort()" style="cursor: pointer; user-select: none;" id="th-admin-category">Categoría ↕️</th>
                     <th>Precio</th>
                     <th>Stock</th>
                     <th>Acciones</th>

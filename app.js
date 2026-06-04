@@ -395,7 +395,9 @@ const state = {
   isSoundMuted: false,
   ordersFilter: 'pendiente',
   currentPreviewProductId: null,
-  visibleProductIds: []
+  visibleProductIds: [],
+  adminProductSearchTerm: '',
+  adminProductSort: ''
 };
 
 // Helper: Get cart details
@@ -1406,14 +1408,39 @@ function renderSalesChart(orders) {
 
 // Admin Tab: Products CRUD
 function renderAdminProducts() {
-  const products = AppDB.get('products') || [];
+  let products = AppDB.get('products') || [];
   const listEl = document.getElementById('admin-products-table-body');
   if (!listEl) return;
+
+  const searchInput = document.getElementById('admin-product-search');
+  if (searchInput) {
+    state.adminProductSearchTerm = searchInput.value;
+  }
+
+  // Filter products by search term
+  const query = (state.adminProductSearchTerm || '').toLowerCase().trim();
+  if (query) {
+    products = products.filter(p => 
+      (p.name || '').toLowerCase().includes(query) || 
+      (p.category || '').toLowerCase().includes(query)
+    );
+  }
+
+  // Sort products by category
+  if (state.adminProductSort) {
+    products.sort((a, b) => {
+      const catA = (a.category || '').toLowerCase();
+      const catB = (b.category || '').toLowerCase();
+      if (catA < catB) return state.adminProductSort === 'asc' ? -1 : 1;
+      if (catA > catB) return state.adminProductSort === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
 
   listEl.innerHTML = products.map(p => `
     <tr>
       <td><img src="${p.image}" class="table-prod-img" alt="${p.name}"></td>
-      <td><strong>${p.name}</strong><br><small class="text-muted">${p.category}</small></td>
+      <td><strong>${p.category}</strong><br><small class="text-muted">${p.name}</small></td>
       <td>$${p.price.toFixed(2)}</td>
       <td>
         <span class="stock-display ${p.stock === 0 ? 'empty' : (p.stock <= 5 ? 'low' : 'ok')}">
@@ -1427,6 +1454,22 @@ function renderAdminProducts() {
     </tr>
   `).join('');
 }
+
+window.handleAdminProductSearch = function(val) {
+  state.adminProductSearchTerm = val;
+  renderAdminProducts();
+};
+
+window.toggleAdminProductCategorySort = function() {
+  state.adminProductSort = state.adminProductSort === 'asc' ? 'desc' : 'asc';
+  
+  const th = document.getElementById('th-admin-category');
+  if (th) {
+    th.innerHTML = `Categoría ${state.adminProductSort === 'asc' ? '▲' : '▼'}`;
+  }
+  
+  renderAdminProducts();
+};
 
 window.openAddProductModal = function() {
   state.editingProduct = null;
