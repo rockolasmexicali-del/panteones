@@ -1826,12 +1826,58 @@ function renderAdminUsers() {
         Deuda: $${u.debt.toFixed(2)}
       </td>
       <td>
-        <button class="btn-action-sm edit" onclick="openCreditLogModal('${u.id}')">Abono/Cargo/Límite</button>
-        <button class="btn-action-sm delete" style="background: rgba(248,113,113,0.1); color: var(--danger); border: 1px solid var(--danger); margin-left: 6px;" onclick="deleteUser('${u.id}')">Eliminar</button>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <button class="btn-action-sm edit" onclick="openCreditLogModal('${u.id}')">Abono/Cargo/Límite 🏦</button>
+          <div style="display: flex; gap: 4px;">
+            <button class="btn-action-sm edit" onclick="openEditUserModal('${u.id}')" style="background: rgba(139, 92, 246, 0.15); color: white; border: 1px solid var(--primary-glow); flex-grow: 1;">Editar 👤</button>
+            <button class="btn-action-sm delete" style="background: rgba(248,113,113,0.1); color: var(--danger); border: 1px solid var(--danger); flex-grow: 1;" onclick="deleteUser('${u.id}')">Eliminar</button>
+          </div>
+        </div>
       </td>
     </tr>
   `).join('');
 }
+
+window.openEditUserModal = function(userId) {
+  const users = AppDB.get('users') || [];
+  const u = users.find(usr => usr.id === userId);
+  if (!u) return;
+
+  document.getElementById('user-edit-id').value = u.id;
+  document.getElementById('user-edit-fullname').value = u.name;
+  document.getElementById('user-edit-alias').value = u.alias || '';
+  document.getElementById('user-edit-phone').value = u.phone || '';
+  document.getElementById('user-edit-city').value = u.city || '';
+  document.getElementById('user-edit-email').value = u.email || '';
+
+  openModal('admin-user-edit-modal');
+};
+
+window.saveUserChangesAdmin = function(e) {
+  e.preventDefault();
+  const userId = document.getElementById('user-edit-id').value;
+  const users = AppDB.get('users') || [];
+  const index = users.findIndex(usr => usr.id === userId);
+
+  if (index !== -1) {
+    users[index].name = document.getElementById('user-edit-fullname').value.trim();
+    users[index].alias = document.getElementById('user-edit-alias').value.trim();
+    users[index].phone = document.getElementById('user-edit-phone').value.trim();
+    users[index].city = document.getElementById('user-edit-city').value.trim();
+    users[index].email = document.getElementById('user-edit-email').value.trim();
+
+    AppDB.set('users', users);
+    
+    if (state.currentUser && state.currentUser.id === userId) {
+      state.currentUser = users[index];
+      localStorage.setItem('flowers_active_session', JSON.stringify(users[index]));
+    }
+
+    closeModal('admin-user-edit-modal');
+    renderAdminUsers();
+    showToast("Datos de cliente actualizados ✓");
+  }
+};
 
 window.deleteUser = function(userId) {
   if (confirm("¿Estás seguro de que deseas eliminar este cliente? Se borrarán sus datos y su historial de crédito.")) {
@@ -1839,7 +1885,6 @@ window.deleteUser = function(userId) {
     users = users.filter(u => u.id !== userId);
     AppDB.set('users', users);
     
-    // Si el usuario eliminado tiene la sesión activa de cliente, cerrarla
     if (state.currentUser && state.currentUser.id === userId) {
       logoutUser();
     }

@@ -349,6 +349,47 @@
     </div>
   </div>
 
+  <!-- Modal Admin: User Edit -->
+  <div class="system-modal centered-modal" id="admin-user-edit-modal">
+    <div class="modal-overlay" onclick="closeModal('admin-user-edit-modal')"></div>
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">Editar Cliente 👤</h3>
+        <button class="btn-close-modal" onclick="closeModal('admin-user-edit-modal')">✕</button>
+      </div>
+      <form onsubmit="saveUserChangesAdmin(event)">
+        <input type="hidden" id="user-edit-id">
+
+        <div class="form-group">
+          <label for="user-edit-fullname">Nombre Completo</label>
+          <input type="text" id="user-edit-fullname" required placeholder="Ej. María Gómez">
+        </div>
+
+        <div class="form-group">
+          <label for="user-edit-alias">Alias o Apodo</label>
+          <input type="text" id="user-edit-alias" placeholder="Ej. Mari Flores (Opcional)">
+        </div>
+
+        <div class="form-group">
+          <label for="user-edit-phone">Teléfono</label>
+          <input type="tel" id="user-edit-phone" required placeholder="10 dígitos">
+        </div>
+
+        <div class="form-group">
+          <label for="user-edit-city">Ciudad</label>
+          <input type="text" id="user-edit-city" required placeholder="Ej. Guadalajara">
+        </div>
+
+        <div class="form-group">
+          <label for="user-edit-email">Correo Electrónico</label>
+          <input type="email" id="user-edit-email" required placeholder="tu@correo.com">
+        </div>
+
+        <button type="submit" class="btn-submit-form" style="background: var(--primary-glow)">Guardar Cambios</button>
+      </form>
+    </div>
+  </div>
+
   <!-- Modal Admin: Product Edit/Create -->
   <div class="system-modal centered-modal" id="admin-product-modal">
     <div class="modal-overlay" onclick="closeModal('admin-product-modal')"></div>
