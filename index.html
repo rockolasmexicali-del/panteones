@@ -308,9 +308,28 @@
       <div class="success-screen">
         <span class="success-badge">🎉</span>
         <h3 style="margin-bottom: 8px;">¡Pedido Realizado Exitosamente!</h3>
-        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.4; margin-bottom: 20px;">
+        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.4; margin-bottom: 16px;">
           Tu pedido ha sido enviado al sistema central.
         </p>
+
+        <div style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 20px; text-align: left;">
+          <h4 style="font-size: 0.85rem; color: var(--primary); margin-bottom: 10px; text-align: center;">🏦 Para Transferencias Bancarias</h4>
+          <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 4px 0; border-radius: 6px; transition: background 0.2s;" onclick="copyAccountNumber(this)">
+              <span style="color: var(--text-secondary);">No. de Cuenta:</span>
+              <span style="font-weight: 700; color: var(--text-primary); font-size: 0.8rem; display: flex; align-items: center; gap: 4px;">728969000043897583 <span style="font-size: 0.7rem; opacity: 0.5;">📋</span></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="color: var(--text-secondary);">Nombre:</span>
+              <span style="font-weight: 700; color: var(--text-primary);">Marco Antonio Ramirez</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="color: var(--text-secondary);">Banco:</span>
+              <span style="font-weight: 700; color: var(--text-primary);">Spin By OXXO</span>
+            </div>
+          </div>
+        </div>
+
         <button class="btn-submit-form" style="background: rgba(255,255,255,0.06); color: white; border: 1px solid var(--glass-border); margin-top: 10px;" onclick="closeModal('success-modal')">Regresar</button>
       </div>
     </div>

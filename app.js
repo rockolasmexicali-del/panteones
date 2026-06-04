@@ -1821,8 +1821,65 @@ window.viewClientOrderDetail = function(orderId) {
       <span>$${order.total.toFixed(2)}</span>
     </div>
   `;
+
+  itemsContainer.innerHTML += `
+    <div style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 10px; padding: 12px; margin-top: 12px; text-align: left;">
+      <h4 style="font-size: 0.8rem; color: var(--primary); margin-bottom: 8px; text-align: center;">🏦 Para Transferencias Bancarias</h4>
+      <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.8rem;">
+        <div style="display: flex; justify-content: space-between; cursor: pointer; padding: 4px 0; border-radius: 6px; transition: background 0.2s;" onclick="copyAccountNumber(this)">
+          <span style="color: var(--text-secondary);">No. de Cuenta:</span>
+          <span style="font-weight: 700; font-size: 0.75rem; display: flex; align-items: center; gap: 4px;">728969000043897583 <span style="font-size: 0.7rem; opacity: 0.5;">📋</span></span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-secondary);">Nombre:</span>
+          <span style="font-weight: 700;">Marco Antonio Ramirez</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-secondary);">Banco:</span>
+          <span style="font-weight: 700;">Spin By OXXO</span>
+        </div>
+      </div>
+    </div>
+  `;
   
   openModal('client-order-detail-modal');
+};
+
+window.copyAccountNumber = function(el) {
+  const accountNumber = '728969000043897583';
+  navigator.clipboard.writeText(accountNumber).then(() => {
+    // Visual feedback
+    const original = el.style.background;
+    el.style.background = 'rgba(52, 211, 153, 0.2)';
+    const span = el.querySelector('span:last-child');
+    const originalText = span.innerHTML;
+    span.innerHTML = '¡Copiado! ✅';
+    span.style.color = 'var(--success)';
+    setTimeout(() => {
+      el.style.background = original;
+      span.innerHTML = originalText;
+      span.style.color = '';
+    }, 1500);
+  }).catch(() => {
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea');
+    textArea.value = accountNumber;
+    textArea.style.position = 'fixed';
+    textArea.style.opacity = '0';
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    
+    const span = el.querySelector('span:last-child');
+    const originalText = span.innerHTML;
+    span.innerHTML = '¡Copiado! ✅';
+    span.style.color = 'var(--success)';
+    setTimeout(() => {
+      span.innerHTML = originalText;
+      span.style.color = '';
+    }, 1500);
+  });
 };
 
 window.viewOrderDetails = function(id) {
