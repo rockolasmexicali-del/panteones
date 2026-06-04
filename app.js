@@ -1017,6 +1017,72 @@ function buildWhatsappLink(order) {
   return `https://wa.me/5215555555555?text=${encodeURIComponent(msg)}`; // Simulated admin WhatsApp
 }
 
+let orderLongPressTimer = null;
+let orderLongPressFired = false;
+
+window.startOrderLongPress = function(e, orderId) {
+  orderLongPressFired = false;
+  if (orderLongPressTimer) clearTimeout(orderLongPressTimer);
+  orderLongPressTimer = setTimeout(() => {
+    orderLongPressFired = true;
+    window.showDeleteOrderModal(orderId);
+  }, 600); // 600ms long press
+};
+
+window.endOrderLongPress = function() {
+  if (orderLongPressTimer) {
+    clearTimeout(orderLongPressTimer);
+    orderLongPressTimer = null;
+  }
+};
+
+window.handleOrderClick = function(e, orderId) {
+  if (orderLongPressFired) {
+    orderLongPressFired = false;
+    return;
+  }
+  window.viewClientOrderDetail(orderId);
+};
+
+window.showDeleteOrderModal = function(orderId) {
+  document.getElementById('delete-order-id-val').value = orderId;
+  openModal('client-delete-order-modal');
+};
+
+window.confirmDeleteClientOrder = function() {
+  const orderId = document.getElementById('delete-order-id-val').value;
+  const orders = AppDB.get('orders') || [];
+  const o = orders.find(ord => ord.id === orderId);
+  
+  if (o) {
+    // Return items to stock
+    const products = AppDB.get('products') || [];
+    o.items.forEach(it => {
+      const p = products.find(prod => prod.id == it.id);
+      if (p) {
+        p.stock = (p.stock || 0) + it.qty;
+      }
+    });
+    AppDB.set('products', products);
+
+    // Delete the order
+    const filteredOrders = orders.filter(ord => ord.id !== orderId);
+    AppDB.set('orders', filteredOrders);
+
+    closeModal('client-delete-order-modal');
+    
+    // Refresh views
+    toggleProfileLogin();
+    renderCatalog();
+    
+    if (window.showToast) {
+      window.showToast("Pedido eliminado e inventario devuelto ✓");
+    } else {
+      alert("Pedido eliminado e inventario devuelto ✓");
+    }
+  }
+};
+
 // --- PROFILE & USER SESSIONS ---
 window.toggleProfileLogin = function() {
   const container = document.getElementById('profile-content-container');
@@ -1091,10 +1157,18 @@ window.toggleProfileLogin = function() {
                   cancelado: '<span class="badge-status cancelled" style="padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">Cancelado</span>'
                 };
                 return `
-                <div class="history-item clickable" onclick="viewClientOrderDetail('${o.id}')" style="cursor: pointer; padding: 10px 8px;">
+                <div class="history-item clickable" 
+                     onmousedown="startOrderLongPress(event, '${o.id}')" 
+                     onmouseup="endOrderLongPress()" 
+                     onmouseleave="endOrderLongPress()" 
+                     ontouchstart="startOrderLongPress(event, '${o.id}')" 
+                     ontouchend="endOrderLongPress()" 
+                     ontouchmove="endOrderLongPress()"
+                     onclick="handleOrderClick(event, '${o.id}')" 
+                     style="cursor: pointer; padding: 10px 8px; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;">
                   <div class="history-meta">
                     <span class="date">${dateStr}</span>
-                    <span class="desc">Pedido #${o.id} <span style="font-size: 0.75rem; opacity: 0.6;">(Ver detalle 👆)</span></span>
+                    <span class="desc">Pedido #${o.id} <span style="font-size: 0.75rem; opacity: 0.6;">(Ver detalle 👆 / Mantener para borrar 🗑️)</span></span>
                     <div style="margin-top: 4px;">${statusLabels[o.status] || o.status}</div>
                   </div>
                   <span class="amount" style="font-weight: bold; color: var(--text-primary);">$${o.total.toFixed(2)}</span>

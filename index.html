@@ -347,6 +347,23 @@
         </div>
       </div>
     </div>
+  <!-- Modal Client: Delete Order Confirmation -->
+  <div class="system-modal centered-modal" id="client-delete-order-modal">
+    <div class="modal-overlay" onclick="closeModal('client-delete-order-modal')"></div>
+    <div class="modal-sheet" style="text-align: center; padding: 24px;">
+      <div class="modal-header" style="justify-content: center; border: none; padding-bottom: 0;">
+        <span style="font-size: 3rem; margin-bottom: 8px;">🗑️</span>
+      </div>
+      <h3 style="margin-top: 0; margin-bottom: 8px; color: var(--text-primary);">¿Eliminar este pedido?</h3>
+      <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem; line-height: 1.4;">
+        Esta acción eliminará el pedido y devolverá los productos al inventario. ¿Deseas continuar?
+      </p>
+      <input type="hidden" id="delete-order-id-val">
+      <div style="display: flex; gap: 8px; justify-content: center;">
+        <button onclick="closeModal('client-delete-order-modal')" class="btn-submit-form" style="background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white; width: auto; padding: 10px 24px;">No, cancelar</button>
+        <button onclick="confirmDeleteClientOrder()" class="btn-submit-form" style="background: var(--danger); width: auto; padding: 10px 24px;">Sí, eliminar</button>
+      </div>
+    </div>
   </div>
 
   <!-- Modal Admin: User Edit -->
