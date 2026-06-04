@@ -501,9 +501,23 @@ function generateProductCardHTML(p, inCart, settings) {
 }
 
 // Render client flower listing
+// Render client flower listing
 function renderCatalog() {
   const listEl = document.getElementById('client-product-list');
   if (!listEl) return;
+
+  // Guardar posiciones de scroll antes de re-renderizar
+  const mainScrollContainer = listEl.closest('main');
+  const mainScrollTop = mainScrollContainer ? mainScrollContainer.scrollTop : 0;
+
+  const horizontalRows = listEl.querySelectorAll('.category-row-horizontal');
+  const horizontalScrolls = {};
+  horizontalRows.forEach(row => {
+    const cat = row.getAttribute('data-category');
+    if (cat) {
+      horizontalScrolls[cat] = row.scrollLeft;
+    }
+  });
 
   const products = AppDB.get('products') || [];
   const settings = AppDB.get('settings') || {};
@@ -552,7 +566,7 @@ function renderCatalog() {
       html += `
         <div class="category-section">
           <h2 class="category-section-title">${getCategoryIcon(cat)} ${catName}</h2>
-          <div class="category-row-horizontal">
+          <div class="category-row-horizontal" data-category="${cat}">
             ${grouped[cat].map(p => {
               const inCart = state.cart[p.id] || 0;
               return generateProductCardHTML(p, inCart, settings);
@@ -587,6 +601,18 @@ function renderCatalog() {
       return generateProductCardHTML(p, inCart, settings);
     }).join('');
   }
+
+  // Restaurar posiciones de scroll después del re-renderizado
+  if (mainScrollContainer) {
+    mainScrollContainer.scrollTop = mainScrollTop;
+  }
+  const newHorizontalRows = listEl.querySelectorAll('.category-row-horizontal');
+  newHorizontalRows.forEach(row => {
+    const cat = row.getAttribute('data-category');
+    if (cat && horizontalScrolls[cat] !== undefined) {
+      row.scrollLeft = horizontalScrolls[cat];
+    }
+  });
 }
 
 // Render category filter chips
