@@ -200,6 +200,8 @@ body {
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain; /* Prevent browser swipe gestures from triggering */
+}
+
 /* Ocultar barra en móviles (pantallas táctiles) */
 @media (hover: none) and (pointer: coarse) {
   .category-row-horizontal {
