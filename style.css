@@ -194,14 +194,35 @@ body {
   overflow-x: auto;
   gap: 12px;
   padding: 4px 16px 16px 16px;
-  scrollbar-width: none; /* Firefox */
+  /* scrollbar-width: none; Firefox (eliminado para PC) */
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) transparent;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain; /* Prevent browser swipe gestures from triggering */
+/* Ocultar barra en móviles (pantallas táctiles) */
+@media (hover: none) and (pointer: coarse) {
+  .category-row-horizontal {
+    scrollbar-width: none;
+  }
+  .category-row-horizontal::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-.category-row-horizontal::-webkit-scrollbar {
-  display: none; /* Chrome/Safari */
+/* Custom scrollbar para PC */
+@media (hover: hover) and (pointer: fine) {
+  .category-row-horizontal::-webkit-scrollbar {
+    height: 6px;
+  }
+  .category-row-horizontal::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+  }
+  .category-row-horizontal::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 10px;
+  }
 }
 
 /* Tarjetas deslizables con ancho fijo */
