@@ -939,6 +939,20 @@ window.submitOrder = function(e) {
   }
 
   const { items, total } = getCartItems();
+
+  // Validate credit limit for logged in user
+  if (state.currentUser) {
+    const users = AppDB.get('users') || [];
+    const dbUser = users.find(usr => usr.id === state.currentUser.id);
+    if (dbUser) {
+      const limit = dbUser.creditLimit || 0;
+      if (dbUser.debt + total > limit) {
+        alert(`No puedes realizar el pedido. El total del pedido ($${total.toFixed(2)}) sumado a tu deuda actual ($${dbUser.debt.toFixed(2)}) supera tu límite de crédito ($${limit.toFixed(2)}).`);
+        return;
+      }
+    }
+  }
+
   const products = AppDB.get('products');
 
   // 1. Deduct stock
@@ -1871,6 +1885,11 @@ window.saveCreditTransaction = function(e) {
     if (type === 'abono') {
       u.debt = Math.max(0, u.debt - amount);
     } else {
+      const limit = u.creditLimit || 0;
+      if (u.debt + amount > limit) {
+        alert(`No se puede registrar el cargo. La deuda resultante ($${(u.debt + amount).toFixed(2)}) supera el límite de crédito autorizado ($${limit.toFixed(2)}).`);
+        return;
+      }
       u.debt += amount;
     }
 
