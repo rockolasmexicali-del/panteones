@@ -1025,6 +1025,7 @@ window.startOrderLongPress = function(e, orderId) {
   if (orderLongPressTimer) clearTimeout(orderLongPressTimer);
   orderLongPressTimer = setTimeout(() => {
     orderLongPressFired = true;
+    if (navigator.vibrate) navigator.vibrate(60); // Haptic feedback vibration
     window.showDeleteOrderModal(orderId);
   }, 600); // 600ms long press
 };
@@ -1164,6 +1165,7 @@ window.toggleProfileLogin = function() {
                      ontouchstart="startOrderLongPress(event, '${o.id}')" 
                      ontouchend="endOrderLongPress()" 
                      ontouchmove="endOrderLongPress()"
+                     oncontextmenu="event.preventDefault(); return false;"
                      onclick="handleOrderClick(event, '${o.id}')" 
                      style="cursor: pointer; padding: 10px 8px; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;">
                   <div class="history-meta">
