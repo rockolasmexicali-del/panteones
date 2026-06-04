@@ -1489,7 +1489,18 @@ function renderAdminOverview() {
 
   // Count pending
   const pendingOrders = orders.filter(o => o.status === 'pendiente');
-  document.getElementById('overview-pending-count').innerText = pendingOrders.length;
+  const countEl = document.getElementById('overview-pending-count');
+  const bellEl = document.getElementById('overview-pending-bell');
+  if (countEl) {
+    countEl.innerText = pendingOrders.length;
+    if (pendingOrders.length > 0) {
+      countEl.classList.add('pulsate');
+      if (bellEl) bellEl.classList.add('ring');
+    } else {
+      countEl.classList.remove('pulsate');
+      if (bellEl) bellEl.classList.remove('ring');
+    }
+  }
 
   // Alerts: Stock bajo y agotado
   const alertContainer = document.getElementById('overview-stock-alerts');

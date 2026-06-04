@@ -1114,10 +1114,43 @@ select option {
   font-size: 2rem;
   font-weight: 800;
   color: var(--primary);
+  display: inline-block;
+  transition: transform 0.3s ease, text-shadow 0.3s ease;
+}
+
+.metric-details .number.pulsate {
+  animation: pulseHighlight 0.4s infinite alternate ease-in-out;
+}
+
+@keyframes pulseHighlight {
+  0% {
+    transform: scale(1);
+    color: #ef4444; /* red pulse for warning/attention */
+    text-shadow: 0 0 4px rgba(239, 68, 68, 0.4);
+  }
+  100% {
+    transform: scale(1.25);
+    color: #f87171;
+    text-shadow: 0 0 16px rgba(239, 68, 68, 0.8);
+  }
 }
 
 .metric-icon {
   font-size: 2rem;
+  display: inline-block;
+  transform-origin: top center;
+}
+
+.metric-icon.ring {
+  animation: bellRing 0.8s infinite ease-in-out;
+}
+
+@keyframes bellRing {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(15deg); }
+  40% { transform: rotate(-15deg); }
+  60% { transform: rotate(10deg); }
+  80% { transform: rotate(-10deg); }
 }
 
 /* Inventory Alerts block */
