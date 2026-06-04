@@ -2734,6 +2734,13 @@ function initializeApp() {
       const diffX = touchEndX - touchStartX;
       const diffY = touchEndY - touchStartY;
 
+      // Si estamos en la vista agrupada ('todas'), deshabilitar el gesto de swipe
+      // para que no interfiera con el scroll horizontal de los productos.
+      const isSearchActive = (state.searchTerm || '').trim().length > 0;
+      if (state.selectedCategory === 'todas' && !isSearchActive) {
+        return; 
+      }
+
       // Detect horizontal swipe gesture
       if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 60) {
         const products = AppDB.get('products') || [];
