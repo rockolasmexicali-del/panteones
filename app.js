@@ -930,6 +930,49 @@ window.searchProducts = function(query) {
   renderCatalog();
 };
 
+let cartLongPressTimer = null;
+state.cartLongPressActive = false;
+
+window.startCartLongPress = function(event) {
+  state.cartLongPressActive = false;
+  const target = document.getElementById('floating-bottom-bar');
+  if (target) target.classList.add('long-press-feedback-cart');
+
+  cartLongPressTimer = setTimeout(() => {
+    state.cartLongPressActive = true;
+    if (target) target.classList.remove('long-press-feedback-cart');
+    
+    openModal('clear-cart-modal');
+  }, 800);
+};
+
+window.confirmClearCart = function() {
+  state.cart = {};
+  updateGlobalCartBar();
+  renderCatalog();
+  if (!state.isSoundMuted) window.playArcadeSound('remove');
+  closeModal('clear-cart-modal');
+  showToast("Carrito vaciado ✓");
+};
+
+window.cancelCartLongPress = function() {
+  clearTimeout(cartLongPressTimer);
+  const target = document.getElementById('floating-bottom-bar');
+  if (target) target.classList.remove('long-press-feedback-cart');
+  setTimeout(() => {
+    state.cartLongPressActive = false;
+  }, 50);
+};
+
+window.handleCartClick = function(event) {
+  if (state.cartLongPressActive) {
+    event.preventDefault();
+    event.stopPropagation();
+    return;
+  }
+  openModal('cart-modal');
+};
+
 // Global Float Cart Update
 function updateGlobalCartBar() {
   const bar = document.getElementById('floating-bottom-bar');
@@ -941,7 +984,13 @@ function updateGlobalCartBar() {
   if (totalCount > 0) {
     bar.classList.add('visible');
     bar.innerHTML = `
-      <div class="bottom-bar-content" onclick="openModal('cart-modal')">
+      <div class="bottom-bar-content" 
+           onclick="handleCartClick(event)"
+           onmousedown="startCartLongPress(event)" 
+           onmouseup="cancelCartLongPress()" 
+           onmouseleave="cancelCartLongPress()"
+           ontouchstart="startCartLongPress(event)"
+           ontouchend="cancelCartLongPress()">
         <div class="bottom-bar-info">
           <span class="cart-icon">🛒</span>
           <span class="cart-count">${totalCount} prod.</span>
@@ -2437,7 +2486,15 @@ window.renderAdminCreditHistoryList = function(userId) {
 };
 
 window.deleteCreditTransaction = function(userId, index) {
-  if(!confirm('¿Estás seguro de que deseas eliminar este movimiento? Esto recalculará la deuda.')) return;
+  document.getElementById('delete-credit-user-id').value = userId;
+  document.getElementById('delete-credit-trans-index').value = index;
+  openModal('delete-credit-trans-modal');
+};
+
+window.confirmDeleteCreditTransaction = function() {
+  const userId = document.getElementById('delete-credit-user-id').value;
+  const index = parseInt(document.getElementById('delete-credit-trans-index').value);
+
   const users = AppDB.get('users');
   const u = users.find(usr => usr.id === userId);
   if (!u) return;
@@ -2455,6 +2512,8 @@ window.deleteCreditTransaction = function(userId, index) {
   document.getElementById('credit-user-debt').innerText = u.debt.toFixed(2);
   renderAdminCreditHistoryList(userId);
   renderAdminUsers();
+  
+  closeModal('delete-credit-trans-modal');
   showToast("Movimiento Eliminado");
 };
 

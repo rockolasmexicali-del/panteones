@@ -1779,3 +1779,32 @@ select option {
 #admin-users-table-body tr:active {
   transform: scale(0.995);
 }
+
+/* Cart Long Press Feedback */
+.long-press-feedback-cart {
+  animation: shake-centered 0.3s infinite !important;
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.7) !important;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(15, 12, 24, 0.95) 100%) !important;
+}
+
+@keyframes shake-centered {
+  0% { transform: translateX(-50%) translate(1px, 1px) rotate(0deg); }
+  10% { transform: translateX(-50%) translate(-1px, -2px) rotate(-1deg); }
+  20% { transform: translateX(-50%) translate(-3px, 0px) rotate(1deg); }
+  30% { transform: translateX(-50%) translate(0px, 2px) rotate(0deg); }
+  40% { transform: translateX(-50%) translate(1px, -1px) rotate(1deg); }
+  50% { transform: translateX(-50%) translate(-1px, 2px) rotate(-1deg); }
+  60% { transform: translateX(-50%) translate(-3px, 1px) rotate(0deg); }
+  70% { transform: translateX(-50%) translate(2px, 1px) rotate(-1deg); }
+  80% { transform: translateX(-50%) translate(-1px, -1px) rotate(1deg); }
+  90% { transform: translateX(-50%) translate(2px, 2px) rotate(0deg); }
+  100% { transform: translateX(-50%) translate(1px, -2px) rotate(-1deg); }
+}
+
+/* Elevate Nested Flow Modals */
+#delete-credit-trans-modal, 
+#credit-amount-modal, 
+#credit-concept-modal {
+  z-index: 300;
+}

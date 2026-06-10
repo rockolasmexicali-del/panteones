@@ -391,6 +391,44 @@
     </div>
   </div>
 
+  <!-- Modal Client: Clear Cart Confirmation -->
+  <div class="system-modal centered-modal" id="clear-cart-modal">
+    <div class="modal-overlay" onclick="closeModal('clear-cart-modal')"></div>
+    <div class="modal-sheet" style="text-align: center; padding: 24px;">
+      <div class="modal-header" style="justify-content: center; border: none; padding-bottom: 0;">
+        <span style="font-size: 3rem; margin-bottom: 8px;">🛒🗑️</span>
+      </div>
+      <h3 style="margin-top: 0; margin-bottom: 8px; color: var(--text-primary);">¿Vaciar el Carrito?</h3>
+      <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem; line-height: 1.4;">
+        Esta acción eliminará todos los productos agregados al carrito. ¿Deseas continuar?
+      </p>
+      <div style="display: flex; gap: 8px; justify-content: center;">
+        <button onclick="closeModal('clear-cart-modal')" class="btn-submit-form" style="background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white; width: auto; padding: 10px 24px;">No, cancelar</button>
+        <button onclick="confirmClearCart()" class="btn-submit-form" style="background: var(--danger); width: auto; padding: 10px 24px;">Sí, vaciar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Admin: Delete Credit Transaction Confirmation -->
+  <div class="system-modal centered-modal" id="delete-credit-trans-modal">
+    <div class="modal-overlay" onclick="closeModal('delete-credit-trans-modal')"></div>
+    <div class="modal-sheet" style="text-align: center; padding: 24px;">
+      <div class="modal-header" style="justify-content: center; border: none; padding-bottom: 0;">
+        <span style="font-size: 3rem; margin-bottom: 8px;">🗑️</span>
+      </div>
+      <h3 style="margin-top: 0; margin-bottom: 8px; color: var(--text-primary);">¿Eliminar este movimiento?</h3>
+      <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem; line-height: 1.4;">
+        Esta acción eliminará el movimiento seleccionado y recalculará la deuda del cliente. ¿Deseas continuar?
+      </p>
+      <input type="hidden" id="delete-credit-user-id">
+      <input type="hidden" id="delete-credit-trans-index">
+      <div style="display: flex; gap: 8px; justify-content: center;">
+        <button onclick="closeModal('delete-credit-trans-modal')" class="btn-submit-form" style="background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white; width: auto; padding: 10px 24px;">No, cancelar</button>
+        <button onclick="confirmDeleteCreditTransaction()" class="btn-submit-form" style="background: var(--danger); width: auto; padding: 10px 24px;">Sí, eliminar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal Client: Delete Order Confirmation -->
   <div class="system-modal centered-modal" id="client-delete-order-modal">
     <div class="modal-overlay" onclick="closeModal('client-delete-order-modal')"></div>
