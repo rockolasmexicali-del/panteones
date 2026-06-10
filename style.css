@@ -1767,3 +1767,15 @@ select option {
   90% { transform: translate(2px, 2px) rotate(0deg); }
   100% { transform: translate(1px, -2px) rotate(-1deg); }
 }
+
+/* Interactive Admin User Row */
+#admin-users-table-body tr {
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+#admin-users-table-body tr:hover {
+  background-color: rgba(139, 92, 246, 0.08);
+}
+#admin-users-table-body tr:active {
+  transform: scale(0.995);
+}

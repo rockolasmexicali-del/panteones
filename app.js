@@ -2092,7 +2092,7 @@ function renderAdminUsers() {
   }
 
   listEl.innerHTML = filteredUsers.map(u => `
-    <tr>
+    <tr onclick="openCreditLogModal('${u.id}')">
       <td>
         <strong>${u.name}</strong>
         ${u.alias ? `<br><span style="font-size:0.75rem; color:var(--primary); font-weight:600;">(${u.alias})</span>` : ''}
@@ -2103,12 +2103,9 @@ function renderAdminUsers() {
         Deuda: $${u.debt.toFixed(2)}
       </td>
       <td>
-        <div style="display: flex; flex-direction: column; gap: 4px;">
-          <button class="btn-action-sm edit" onclick="openCreditLogModal('${u.id}')">Abono/Cargo/Límite 🏦</button>
-          <div style="display: flex; gap: 4px;">
-            <button class="btn-action-sm edit" onclick="openEditUserModal('${u.id}')" style="background: rgba(139, 92, 246, 0.15); color: white; border: 1px solid var(--primary-glow); flex-grow: 1;">Editar 👤</button>
-            <button class="btn-action-sm delete" style="background: rgba(248,113,113,0.1); color: var(--danger); border: 1px solid var(--danger); flex-grow: 1;" onclick="deleteUser('${u.id}')">Eliminar</button>
-          </div>
+        <div style="display: flex; gap: 6px;">
+          <button class="btn-action-sm edit" onclick="event.stopPropagation(); openEditUserModal('${u.id}')" style="background: rgba(139, 92, 246, 0.15); color: white; border: 1px solid var(--primary-glow); flex-grow: 1; padding: 8px 12px;">Editar 👤</button>
+          <button class="btn-action-sm delete" style="background: rgba(248,113,113,0.1); color: var(--danger); border: 1px solid var(--danger); flex-grow: 1; padding: 8px 12px;" onclick="event.stopPropagation(); deleteUser('${u.id}')">Eliminar</button>
         </div>
       </td>
     </tr>
