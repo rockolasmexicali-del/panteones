@@ -519,34 +519,13 @@
         Límite de Crédito: <strong>$<span id="credit-user-limit">0.00</span></strong> | 
         Deuda Registrada: <strong>$<span id="credit-user-debt">0.00</span></strong>
       </p>
-      
-      <form onsubmit="saveCreditTransaction(event)">
-        <div class="form-group">
-          <label for="credit-trans-type">Tipo de Operación</label>
-          <select id="credit-trans-type" required>
-            <option value="abono">Abono (El cliente paga/disminuye deuda)</option>
-            <option value="cargo">Cargo (El cliente pide a crédito/aumenta deuda)</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="credit-amount">Monto ($)</label>
-          <input type="number" id="credit-amount" step="0.01" required placeholder="0.00">
-        </div>
-
-        <div class="form-group">
-          <label for="credit-description">Concepto / Descripción</label>
-          <input type="text" id="credit-description" placeholder="Ej. Abono en efectivo / Pedido adicional">
-        </div>
-
-        <button type="submit" class="btn-submit-form" style="background: var(--primary-glow)">Registrar Movimiento 🏦</button>
-      </form>
+      <button type="button" class="btn-submit-form" style="background: var(--primary-glow); margin-bottom: 15px;" onclick="startCreditFlow()">Registrar Movimiento 🏦</button>
 
       <!-- Historial de movimientos del usuario -->
       <div id="admin-credit-history-list" class="admin-history-list-container">
         <!-- Renderizado dinámicamente en app.js -->
       </div>
-
+      
       <div class="form-group" style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--glass-border);">
         <label for="credit-limit-input">Modificar Límite de Crédito Autorizado ($)</label>
         <div style="display: flex; gap: 8px;">
@@ -554,6 +533,59 @@
           <button type="button" class="btn-submit-form" style="width: auto; background: var(--success); padding: 10px 16px;" onclick="updateCreditLimitOnly()">Guardar Límite ⚙️</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal Admin: Credit Amount Input -->
+  <div class="system-modal centered-modal" id="credit-amount-modal">
+    <div class="modal-overlay" onclick="closeModal('credit-amount-modal'); openModal('admin-credit-ledger-modal')"></div>
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">Registrar Movimiento 💰</h3>
+        <button class="btn-close-modal" onclick="closeModal('credit-amount-modal'); openModal('admin-credit-ledger-modal')">✕</button>
+      </div>
+      <form onsubmit="submitCreditAmount(event)">
+        <div class="form-group">
+          <label for="credit-flow-amount">Monto ($)</label>
+          <input type="number" id="credit-flow-amount" step="0.01" required placeholder="0.00" min="0.01" autofocus>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn-submit-form" style="background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white;" onclick="closeModal('credit-amount-modal'); openModal('admin-credit-ledger-modal')">Cancelar</button>
+          <button type="submit" class="btn-submit-form" style="background: var(--primary-glow)">Siguiente ➔</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Admin: Credit Concept Selection -->
+  <div class="system-modal centered-modal" id="credit-concept-modal">
+    <div class="modal-overlay" onclick="closeModal('credit-concept-modal'); openModal('credit-amount-modal')"></div>
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">Seleccionar Concepto 🏷️</h3>
+        <button class="btn-close-modal" onclick="closeModal('credit-concept-modal'); openModal('credit-amount-modal')">✕</button>
+      </div>
+      <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px; text-align: center;">
+        Monto a registrar: <strong style="color: white; font-size: 0.95rem;">$<span id="credit-flow-amount-confirm">0.00</span></strong>
+      </p>
+      
+      <!-- Grid de botones rápidos -->
+      <div id="credit-concept-buttons" class="concept-buttons-grid">
+        <!-- Renderizado dinámicamente -->
+      </div>
+
+      <!-- Formulario para agregar concepto personalizado -->
+      <form onsubmit="submitCustomConcept(event)" style="border-top: 1px dashed var(--glass-border); padding-top: 16px;">
+        <div class="form-group">
+          <label for="credit-flow-custom-concept">Otro Concepto Personalizado</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="credit-flow-custom-concept" placeholder="Ej. Base de madera" required style="flex-grow: 1;">
+            <button type="submit" class="btn-submit-form" style="width: auto; background: var(--success); padding: 10px 16px;">Registrar ➔</button>
+          </div>
+        </div>
+      </form>
+
+      <button type="button" class="btn-submit-form" style="background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white; margin-top: 10px;" onclick="closeModal('credit-concept-modal'); openModal('credit-amount-modal')">Volver al Monto</button>
     </div>
   </div>
 

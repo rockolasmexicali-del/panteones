@@ -2185,27 +2185,121 @@ window.openCreditLogModal = function(userId) {
   document.getElementById('credit-user-name').innerText = u.name;
   document.getElementById('credit-user-limit').innerText = (u.creditLimit || 0).toFixed(2);
   document.getElementById('credit-user-debt').innerText = u.debt.toFixed(2);
-  document.getElementById('credit-amount').value = '';
-  document.getElementById('credit-description').value = '';
   document.getElementById('credit-limit-input').value = u.creditLimit || 0;
 
   renderAdminCreditHistoryList(userId);
   openModal('admin-credit-ledger-modal');
 };
 
-window.saveCreditTransaction = function(e) {
-  e.preventDefault();
+// --- REDESIGNED CREDIT TRANSACTION SEQUENTIAL FLOW ---
+
+function getCustomConcepts() {
+  let concepts = JSON.parse(localStorage.getItem('flowers_custom_concepts'));
+  if (!concepts || !Array.isArray(concepts)) {
+    concepts = ['Abono', 'Flor', 'Liston', 'Mensajes'];
+    localStorage.setItem('flowers_custom_concepts', JSON.stringify(concepts));
+  }
+  return concepts;
+}
+
+window.startCreditFlow = function() {
   if (!activeCreditUserId) return;
+  document.getElementById('credit-flow-amount').value = '';
+  closeModal('admin-credit-ledger-modal');
+  openModal('credit-amount-modal');
+  setTimeout(() => {
+    const amountInput = document.getElementById('credit-flow-amount');
+    if (amountInput) amountInput.focus();
+  }, 100);
+};
 
-  const type = document.getElementById('credit-trans-type').value; // 'abono', 'cargo'
-  const amount = parseFloat(document.getElementById('credit-amount').value);
-  const desc = document.getElementById('credit-description').value.trim() || (type === 'abono' ? 'Abono registrado' : 'Deuda cargada');
-
+window.submitCreditAmount = function(e) {
+  e.preventDefault();
+  const amount = parseFloat(document.getElementById('credit-flow-amount').value);
   if (isNaN(amount) || amount <= 0) {
-    alert("Ingresa un monto válido mayor a 0.");
+    alert("Por favor, ingresa un monto válido mayor a 0.");
     return;
   }
+  state.tempCreditAmount = amount;
+  document.getElementById('credit-flow-amount-confirm').innerText = amount.toFixed(2);
+  document.getElementById('credit-flow-custom-concept').value = '';
+  
+  closeModal('credit-amount-modal');
+  openModal('credit-concept-modal');
+  renderCreditConceptButtons();
+};
 
+window.renderCreditConceptButtons = function() {
+  const container = document.getElementById('credit-concept-buttons');
+  if (!container) return;
+  const concepts = getCustomConcepts();
+  const defaults = ['Abono', 'Flor', 'Liston', 'Mensajes'];
+  
+  container.innerHTML = concepts.map(c => {
+    const isDefault = defaults.includes(c);
+    const klass = isDefault ? 'default-concept' : 'custom-concept';
+    
+    return `
+      <button type="button" class="concept-btn ${klass}" 
+              onclick="handleConceptClick('${c}')"
+              onmousedown="startConceptLongPress(event, '${c}')"
+              onmouseup="cancelConceptLongPress()"
+              onmouseleave="cancelConceptLongPress()"
+              ontouchstart="startConceptLongPress(event, '${c}')"
+              ontouchend="cancelConceptLongPress()">
+        <span>${c}</span>
+      </button>
+    `;
+  }).join('');
+};
+
+window.handleConceptClick = function(concept) {
+  if (state.longPressActive) return;
+  selectCreditConcept(concept);
+};
+
+let conceptLongPressTimer = null;
+state.longPressActive = false;
+
+window.startConceptLongPress = function(event, concept) {
+  const defaults = ['Abono', 'Flor', 'Liston', 'Mensajes'];
+  if (defaults.includes(concept)) return; // Protect defaults
+  
+  state.longPressActive = false;
+  const target = event.currentTarget;
+  
+  target.classList.add('long-press-feedback');
+  
+  conceptLongPressTimer = setTimeout(() => {
+    state.longPressActive = true;
+    target.classList.remove('long-press-feedback');
+    
+    if (confirm(`¿Deseas eliminar el concepto "${concept}" de la lista de botones rápidos?`)) {
+      let concepts = getCustomConcepts();
+      concepts = concepts.filter(c => c !== concept);
+      localStorage.setItem('flowers_custom_concepts', JSON.stringify(concepts));
+      renderCreditConceptButtons();
+    }
+  }, 600);
+};
+
+window.cancelConceptLongPress = function() {
+  clearTimeout(conceptLongPressTimer);
+  document.querySelectorAll('.concept-btn.long-press-feedback').forEach(el => {
+    el.classList.remove('long-press-feedback');
+  });
+  setTimeout(() => {
+    state.longPressActive = false;
+  }, 50);
+};
+
+window.selectCreditConcept = function(concept) {
+  if (!activeCreditUserId || !state.tempCreditAmount) return;
+  
+  const amount = state.tempCreditAmount;
+  const type = (concept.trim().toLowerCase() === 'abono') ? 'abono' : 'cargo';
+  const desc = concept.trim();
+  
   const users = AppDB.get('users');
   const u = users.find(usr => usr.id === activeCreditUserId);
   if (u) {
@@ -2219,26 +2313,39 @@ window.saveCreditTransaction = function(e) {
       }
       u.debt += amount;
     }
-
+    
     u.creditHistory.push({
       type: type === 'abono' ? 'abono' : 'deuda',
       amount,
       date: new Date().toISOString().split('T')[0],
       description: desc
     });
-
+    
     AppDB.set('users', users);
     
-    // UI Updates
     document.getElementById('credit-user-debt').innerText = u.debt.toFixed(2);
-    document.getElementById('credit-amount').value = '';
-    document.getElementById('credit-description').value = '';
     
     renderAdminCreditHistoryList(activeCreditUserId);
     renderAdminUsers();
     
+    closeModal('credit-concept-modal');
+    openModal('admin-credit-ledger-modal');
     showToast("Movimiento Registrado ✓");
   }
+};
+
+window.submitCustomConcept = function(e) {
+  e.preventDefault();
+  const inputVal = document.getElementById('credit-flow-custom-concept').value.trim();
+  if (!inputVal) return;
+  
+  let concepts = getCustomConcepts();
+  if (!concepts.some(c => c.toLowerCase() === inputVal.toLowerCase())) {
+    concepts.push(inputVal);
+    localStorage.setItem('flowers_custom_concepts', JSON.stringify(concepts));
+  }
+  
+  selectCreditConcept(inputVal);
 };
 
 window.updateCreditLimitOnly = function() {
