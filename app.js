@@ -285,6 +285,8 @@ async function syncToCloud(key, val, oldVal) {
 let _realtimeDebounceTimer = null;
 function setupRealtime() {
   if (!supabaseClient) return;
+  
+  // Realtime channel listener
   supabaseClient.channel('schema-db-changes')
     .on('postgres_changes', { event: '*', schema: 'public' }, () => {
       // Debounce realtime events to avoid rapid-fire sync calls
@@ -294,9 +296,17 @@ function setupRealtime() {
         if (!isSyncingToCloud) {
           syncFromCloud();
         }
-      }, 1500);
+      }, 1000); // Reduced debounce time to 1s for faster updates
     })
     .subscribe();
+
+  // Periodic polling fallback every 5 seconds to guarantee real-time updates
+  // even if Supabase replication/realtime is not enabled in the database dashboard
+  setInterval(() => {
+    if (!isSyncingToCloud) {
+      syncFromCloud().catch(err => console.error("Periodic sync fallback failed:", err));
+    }
+  }, 5000);
 }
 
 try {
@@ -398,7 +408,8 @@ const state = {
   visibleProductIds: [],
   adminProductSearchTerm: '',
   adminProductSort: '',
-  adminUserSearchTerm: ''
+  adminUserSearchTerm: '',
+  lastPendingCount: null
 };
 
 // Helper: Get cart details
@@ -2851,6 +2862,10 @@ window.printPendingOrders = function() {
 
 // Initial document triggers
 function initializeApp() {
+  // Initialize last pending count to avoid triggering notifications on first load
+  const initialOrders = AppDB.get('orders') || [];
+  state.lastPendingCount = initialOrders.filter(o => o.status === 'pendiente').length;
+
   // Sync view states based on URL path/hash/search parameter
   const isAdminRoute = window.location.hash === '#admin' || 
                        window.location.search.includes('admin') || 
@@ -2876,6 +2891,33 @@ function initializeApp() {
   
   // Global listener for reactive sync
   window.addEventListener('db_updated', () => {
+    // Check for new pending orders for administrator real-time notification
+    const isAdmin = localStorage.getItem('flowers_admin_authenticated') === 'true';
+    const currentOrders = AppDB.get('orders') || [];
+    const currentPendingCount = currentOrders.filter(o => o.status === 'pendiente').length;
+
+    if (isAdmin && state.lastPendingCount !== null && currentPendingCount > state.lastPendingCount) {
+      // Play alert sound
+      if (!state.isSoundMuted) {
+        window.playArcadeSound('success');
+      }
+      // Show notification toast
+      if (window.showToast) {
+        window.showToast("🔔 ¡Nuevo pedido recibido!");
+      }
+      
+      // Trigger a micro-animation on the overview card if it exists
+      const countEl = document.getElementById('overview-pending-count');
+      if (countEl) {
+        const metricCard = countEl.closest('.admin-metric-card');
+        if (metricCard) {
+          metricCard.classList.add('pop-shake');
+          setTimeout(() => metricCard.classList.remove('pop-shake'), 1000);
+        }
+      }
+    }
+    state.lastPendingCount = currentPendingCount;
+
     // When DB is updated externally (e.g. syncFromCloud), sync ALL visual elements
     
     // Always: refresh active user session if logged in (credit/debt may have changed remotely)
@@ -2923,8 +2965,6 @@ function initializeApp() {
       window.dispatchEvent(new Event('db_updated'));
     }
   });
-
-
 }
 
 if (document.readyState === 'loading') {

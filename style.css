@@ -1808,3 +1808,16 @@ select option {
 #credit-concept-modal {
   z-index: 300;
 }
+
+/* Micro-animations for notifications */
+@keyframes pop-shake {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.06) rotate(-2deg); }
+  50% { transform: scale(1.06) rotate(2deg); }
+  75% { transform: scale(1.06) rotate(-1deg); }
+  100% { transform: scale(1); }
+}
+.pop-shake {
+  animation: pop-shake 0.5s ease-in-out;
+}
+
