@@ -1603,14 +1603,14 @@ function renderAdminOverview() {
   let alertHTML = '';
   if (outOfStock.length > 0) {
     alertHTML += outOfStock.map(p => `
-      <div class="stock-alert-item danger">
+      <div class="stock-alert-item danger" onclick="openEditProductModal(${p.id})" style="cursor: pointer;">
         ❌ <strong>Agotado:</strong> El producto <u>${p.category} - ${p.name}</u> está en 0 de stock. Oculto de la app de clientes.
       </div>
     `).join('');
   }
   if (lowStock.length > 0) {
     alertHTML += lowStock.map(p => `
-      <div class="stock-alert-item warning">
+      <div class="stock-alert-item warning" onclick="openEditProductModal(${p.id})" style="cursor: pointer;">
         ⚠️ <strong>Inventario Bajo:</strong> El producto <u>${p.category} - ${p.name}</u> tiene solo ${p.stock} unidades.
       </div>
     `).join('');
