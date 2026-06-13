@@ -1574,27 +1574,6 @@ function switchAdminTab(tab) {
 }
 window.switchAdminTab = switchAdminTab;
 
-// Admin Tab: Overview & Analytics
-function renderAdminOverview() {
-  const orders = AppDB.get('orders') || [];
-  const products = AppDB.get('products') || [];
-  const settings = AppDB.get('settings') || {};
-
-  // Count pending
-  const pendingOrders = orders.filter(o => o.status === 'pendiente');
-  const countEl = document.getElementById('overview-pending-count');
-  const bellEl = document.getElementById('overview-pending-bell');
-  if (countEl) {
-    countEl.innerText = pendingOrders.length;
-    if (pendingOrders.length > 0) {
-      countEl.classList.add('pulsate');
-      if (bellEl) bellEl.classList.add('ring');
-    } else {
-      countEl.classList.remove('pulsate');
-      if (bellEl) bellEl.classList.remove('ring');
-    }
-  }
-
 let alertLongPressTimer = null;
 let alertLongPressFired = false;
 
@@ -1637,13 +1616,13 @@ window.confirmDismissAlert = function() {
     const list = AppDB.get('dismissedOutOfStock') || [];
     if (!list.includes(prodId)) {
       list.push(prodId);
-      AppDB.set('dismissedOutOfStock', list);
+      localStorage.setItem('flowers_dismissedOutOfStock', JSON.stringify(list));
     }
   } else if (alertType === 'lowStock') {
     const list = AppDB.get('dismissedLowStock') || [];
     if (!list.includes(prodId)) {
       list.push(prodId);
-      AppDB.set('dismissedLowStock', list);
+      localStorage.setItem('flowers_dismissedLowStock', JSON.stringify(list));
     }
   }
 
@@ -1686,8 +1665,8 @@ function renderAdminOverview() {
     return p && p.stock > 0 && p.stock <= (settings.criticalStockThreshold || 5);
   });
 
-  AppDB.set('dismissedOutOfStock', dismissedOutOfStock);
-  AppDB.set('dismissedLowStock', dismissedLowStock);
+  localStorage.setItem('flowers_dismissedOutOfStock', JSON.stringify(dismissedOutOfStock));
+  localStorage.setItem('flowers_dismissedLowStock', JSON.stringify(dismissedLowStock));
 
   // Alerts: Stock bajo y agotado
   const alertContainer = document.getElementById('overview-stock-alerts');
