@@ -1595,27 +1595,140 @@ function renderAdminOverview() {
     }
   }
 
+let alertLongPressTimer = null;
+let alertLongPressFired = false;
+
+window.startAlertLongPress = function(e, prodId, alertType) {
+  alertLongPressFired = false;
+  if (alertLongPressTimer) clearTimeout(alertLongPressTimer);
+  alertLongPressTimer = setTimeout(() => {
+    alertLongPressFired = true;
+    if (navigator.vibrate) navigator.vibrate(60); // Haptic vibration if supported
+    window.showDismissAlertModal(prodId, alertType);
+  }, 600); // 600ms long press
+};
+
+window.endAlertLongPress = function() {
+  if (alertLongPressTimer) {
+    clearTimeout(alertLongPressTimer);
+    alertLongPressTimer = null;
+  }
+};
+
+window.handleAlertClick = function(e, prodId) {
+  if (alertLongPressFired) {
+    alertLongPressFired = false;
+    return;
+  }
+  window.openEditProductModal(prodId);
+};
+
+window.showDismissAlertModal = function(prodId, alertType) {
+  document.getElementById('dismiss-alert-prod-id').value = prodId;
+  document.getElementById('dismiss-alert-type').value = alertType;
+  openModal('admin-dismiss-alert-modal');
+};
+
+window.confirmDismissAlert = function() {
+  const prodId = parseInt(document.getElementById('dismiss-alert-prod-id').value);
+  const alertType = document.getElementById('dismiss-alert-type').value;
+
+  if (alertType === 'outOfStock') {
+    const list = AppDB.get('dismissedOutOfStock') || [];
+    if (!list.includes(prodId)) {
+      list.push(prodId);
+      AppDB.set('dismissedOutOfStock', list);
+    }
+  } else if (alertType === 'lowStock') {
+    const list = AppDB.get('dismissedLowStock') || [];
+    if (!list.includes(prodId)) {
+      list.push(prodId);
+      AppDB.set('dismissedLowStock', list);
+    }
+  }
+
+  closeModal('admin-dismiss-alert-modal');
+  renderAdminOverview();
+};
+
+// Admin Tab: Overview & Analytics
+function renderAdminOverview() {
+  const orders = AppDB.get('orders') || [];
+  const products = AppDB.get('products') || [];
+  const settings = AppDB.get('settings') || {};
+
+  // Count pending
+  const pendingOrders = orders.filter(o => o.status === 'pendiente');
+  const countEl = document.getElementById('overview-pending-count');
+  const bellEl = document.getElementById('overview-pending-bell');
+  if (countEl) {
+    countEl.innerText = pendingOrders.length;
+    if (pendingOrders.length > 0) {
+      countEl.classList.add('pulsate');
+      if (bellEl) bellEl.classList.add('ring');
+    } else {
+      countEl.classList.remove('pulsate');
+      if (bellEl) bellEl.classList.remove('ring');
+    }
+  }
+
+  // Sync dismissed alerts: clean up items that are no longer in alert state
+  let dismissedOutOfStock = AppDB.get('dismissedOutOfStock') || [];
+  let dismissedLowStock = AppDB.get('dismissedLowStock') || [];
+
+  dismissedOutOfStock = dismissedOutOfStock.filter(id => {
+    const p = products.find(prod => prod.id == id);
+    return p && p.stock === 0;
+  });
+
+  dismissedLowStock = dismissedLowStock.filter(id => {
+    const p = products.find(prod => prod.id == id);
+    return p && p.stock > 0 && p.stock <= (settings.criticalStockThreshold || 5);
+  });
+
+  AppDB.set('dismissedOutOfStock', dismissedOutOfStock);
+  AppDB.set('dismissedLowStock', dismissedLowStock);
+
   // Alerts: Stock bajo y agotado
   const alertContainer = document.getElementById('overview-stock-alerts');
-  const lowStock = products.filter(p => p.stock > 0 && p.stock <= settings.criticalStockThreshold);
+  const lowStock = products.filter(p => p.stock > 0 && p.stock <= (settings.criticalStockThreshold || 5));
   const outOfStock = products.filter(p => p.stock === 0);
 
+  const visibleOutOfStock = outOfStock.filter(p => !dismissedOutOfStock.includes(p.id));
+  const visibleLowStock = lowStock.filter(p => !dismissedLowStock.includes(p.id));
+
   let alertHTML = '';
-  if (outOfStock.length > 0) {
-    alertHTML += outOfStock.map(p => `
-      <div class="stock-alert-item danger" onclick="openEditProductModal(${p.id})" style="cursor: pointer;">
+  if (visibleOutOfStock.length > 0) {
+    alertHTML += visibleOutOfStock.map(p => `
+      <div class="stock-alert-item danger" 
+           onmousedown="startAlertLongPress(event, ${p.id}, 'outOfStock')" 
+           onmouseup="endAlertLongPress()" 
+           onmouseleave="endAlertLongPress()" 
+           ontouchstart="startAlertLongPress(event, ${p.id}, 'outOfStock')" 
+           ontouchend="endAlertLongPress()" 
+           ontouchmove="endAlertLongPress()"
+           onclick="handleAlertClick(event, ${p.id})"
+           style="cursor: pointer; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; transition: transform 0.1s;">
         ❌ <strong>Agotado:</strong> El producto <u>${p.category} - ${p.name}</u> está en 0 de stock. Oculto de la app de clientes.
       </div>
     `).join('');
   }
-  if (lowStock.length > 0) {
-    alertHTML += lowStock.map(p => `
-      <div class="stock-alert-item warning" onclick="openEditProductModal(${p.id})" style="cursor: pointer;">
+  if (visibleLowStock.length > 0) {
+    alertHTML += visibleLowStock.map(p => `
+      <div class="stock-alert-item warning" 
+           onmousedown="startAlertLongPress(event, ${p.id}, 'lowStock')" 
+           onmouseup="endAlertLongPress()" 
+           onmouseleave="endAlertLongPress()" 
+           ontouchstart="startAlertLongPress(event, ${p.id}, 'lowStock')" 
+           ontouchend="endAlertLongPress()" 
+           ontouchmove="endAlertLongPress()"
+           onclick="handleAlertClick(event, ${p.id})"
+           style="cursor: pointer; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; transition: transform 0.1s;">
         ⚠️ <strong>Inventario Bajo:</strong> El producto <u>${p.category} - ${p.name}</u> tiene solo ${p.stock} unidades.
       </div>
     `).join('');
   }
-  if (lowStock.length === 0 && outOfStock.length === 0) {
+  if (visibleLowStock.length === 0 && visibleOutOfStock.length === 0) {
     alertHTML = `<p class="empty-alerts">Todo en orden con el inventario 🌸</p>`;
   }
   alertContainer.innerHTML = alertHTML;

@@ -448,6 +448,26 @@
     </div>
   </div>
 
+  <!-- Modal Admin: Dismiss Stock Alert Confirmation -->
+  <div class="system-modal centered-modal" id="admin-dismiss-alert-modal">
+    <div class="modal-overlay" onclick="closeModal('admin-dismiss-alert-modal')"></div>
+    <div class="modal-sheet" style="text-align: center; padding: 24px;">
+      <div class="modal-header" style="justify-content: center; border: none; padding-bottom: 0;">
+        <span style="font-size: 3rem; margin-bottom: 8px;">⚠️🗑️</span>
+      </div>
+      <h3 style="margin-top: 0; margin-bottom: 8px; color: var(--text-primary);">¿Eliminar esta alerta?</h3>
+      <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem; line-height: 1.4;">
+        Esta alerta no volverá a aparecer hasta que agregues stock de nuevo y se vuelva a bajar.
+      </p>
+      <input type="hidden" id="dismiss-alert-prod-id">
+      <input type="hidden" id="dismiss-alert-type">
+      <div style="display: flex; gap: 8px; justify-content: center;">
+        <button onclick="closeModal('admin-dismiss-alert-modal')" class="btn-submit-form" style="background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white; width: auto; padding: 10px 24px;">No, cancelar</button>
+        <button onclick="confirmDismissAlert()" class="btn-submit-form" style="background: var(--danger); width: auto; padding: 10px 24px;">Sí, eliminar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal Admin: User Edit -->
   <div class="system-modal centered-modal" id="admin-user-edit-modal">
     <div class="modal-overlay" onclick="closeModal('admin-user-edit-modal')"></div>
