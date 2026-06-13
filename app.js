@@ -1604,14 +1604,14 @@ function renderAdminOverview() {
   if (outOfStock.length > 0) {
     alertHTML += outOfStock.map(p => `
       <div class="stock-alert-item danger">
-        ❌ <strong>Agotado:</strong> El producto <u>${p.name}</u> está en 0 de stock. Oculto de la app de clientes.
+        ❌ <strong>Agotado:</strong> El producto <u>${p.category} - ${p.name}</u> está en 0 de stock. Oculto de la app de clientes.
       </div>
     `).join('');
   }
   if (lowStock.length > 0) {
     alertHTML += lowStock.map(p => `
       <div class="stock-alert-item warning">
-        ⚠️ <strong>Inventario Bajo:</strong> El producto <u>${p.name}</u> tiene solo ${p.stock} unidades.
+        ⚠️ <strong>Inventario Bajo:</strong> El producto <u>${p.category} - ${p.name}</u> tiene solo ${p.stock} unidades.
       </div>
     `).join('');
   }
