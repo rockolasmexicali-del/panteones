@@ -577,7 +577,10 @@
         Límite de Crédito: <strong>$<span id="credit-user-limit">0.00</span></strong> | 
         Deuda Registrada: <strong>$<span id="credit-user-debt">0.00</span></strong>
       </p>
-      <button type="button" class="btn-submit-form" style="background: var(--primary-glow); margin-bottom: 15px;" onclick="startCreditFlow()">Registrar Movimiento 🏦</button>
+      <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+        <button type="button" class="btn-submit-form" style="background: var(--primary-glow); flex-grow: 1;" onclick="startCreditFlow()">Registrar Movimiento 🏦</button>
+        <button type="button" class="btn-submit-form" style="background: var(--danger); width: auto; padding: 0 15px;" onclick="resetUserCredit()" title="Saldar Deuda y Borrar Historial">Borrar Todo 🗑️</button>
+      </div>
 
       <!-- Historial de movimientos del usuario -->
       <div id="admin-credit-history-list" class="admin-history-list-container">

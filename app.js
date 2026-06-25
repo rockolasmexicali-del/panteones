@@ -2351,6 +2351,25 @@ function getCustomConcepts() {
   return concepts;
 }
 
+window.resetUserCredit = function() {
+  if (!activeCreditUserId) return;
+  const users = AppDB.get('users');
+  const u = users.find(usr => usr.id === activeCreditUserId);
+  if (!u) return;
+  
+  if (confirm(`¿Estás seguro de que quieres SALDAR la deuda de ${u.name} (poner a $0.00) y BORRAR todo su historial de movimientos?\n\nEsta acción no se puede deshacer.`)) {
+    u.debt = 0;
+    u.creditHistory = [];
+    AppDB.set('users', users);
+    
+    document.getElementById('credit-user-debt').innerText = "0.00";
+    renderAdminCreditHistoryList(activeCreditUserId);
+    renderAdminUsers();
+    
+    showToast("Deuda saldada e historial borrado");
+  }
+};
+
 window.startCreditFlow = function() {
   if (!activeCreditUserId) return;
   document.getElementById('credit-flow-amount').value = '';
