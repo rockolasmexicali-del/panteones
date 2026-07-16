@@ -859,6 +859,17 @@ window.showPreviewProduct = function(productId) {
   const products = AppDB.get('products') || [];
   const p = products.find(prod => prod.id == productId);
   if (!p) return;
+
+  // Restrict preview navigation to products of the same category that are currently visible
+  if (state.visibleProductIds) {
+    state.previewProductIds = state.visibleProductIds.filter(id => {
+      const prod = products.find(pr => pr.id == id);
+      return prod && prod.category === p.category;
+    });
+  } else {
+    state.previewProductIds = [productId];
+  }
+
   const combinedName = (p.category && p.category !== 'todas' 
     ? p.category.charAt(0).toUpperCase() + p.category.slice(1) + ' ' 
     : '') + p.name;
@@ -890,15 +901,15 @@ window.showPreviewProduct = function(productId) {
 };
 
 window.navigatePreview = function(direction) {
-  if (!state.visibleProductIds || state.visibleProductIds.length === 0) return;
-  const currentIndex = state.visibleProductIds.indexOf(state.currentPreviewProductId);
+  if (!state.previewProductIds || state.previewProductIds.length === 0) return;
+  const currentIndex = state.previewProductIds.indexOf(state.currentPreviewProductId);
   if (currentIndex === -1) return;
   
   let newIndex = currentIndex + direction;
   // Loop around
   if (newIndex < 0) {
-    newIndex = state.visibleProductIds.length - 1;
-  } else if (newIndex >= state.visibleProductIds.length) {
+    newIndex = state.previewProductIds.length - 1;
+  } else if (newIndex >= state.previewProductIds.length) {
     newIndex = 0;
   }
   
@@ -918,7 +929,7 @@ window.navigatePreview = function(direction) {
   imgEl.classList.add(outClass);
 
   setTimeout(() => {
-    state.currentPreviewProductId = state.visibleProductIds[newIndex];
+    state.currentPreviewProductId = state.previewProductIds[newIndex];
     const products = AppDB.get('products') || [];
     const p = products.find(prod => prod.id == state.currentPreviewProductId);
     if (p) {
