@@ -591,7 +591,7 @@ function renderCatalog() {
         <div class="category-section">
           <h2 class="category-section-title">${getCategoryIcon(cat)} ${catName}</h2>
           <div class="scroll-arrow scroll-arrow-left" onclick="scrollCategory(this, -1)">‹</div>
-          <div class="category-row-horizontal" data-category="${cat}" onscroll="updateScrollArrows(this)">
+          <div class="category-row-horizontal" data-category="${cat}">
             ${grouped[cat].map(p => {
               const inCart = state.cart[p.id] || 0;
               return generateProductCardHTML(p, inCart, settings);
@@ -647,6 +647,17 @@ function renderCatalog() {
     }
     // Update scroll arrows after DOM changes and restoring scroll
     setTimeout(() => updateScrollArrows(row), 50);
+
+    // Optimized passive scroll listener (debounced with requestAnimationFrame)
+    let scrollTimeout;
+    row.addEventListener('scroll', () => {
+      if (!scrollTimeout) {
+        scrollTimeout = window.requestAnimationFrame(() => {
+          updateScrollArrows(row);
+          scrollTimeout = null;
+        });
+      }
+    }, { passive: true });
   });
 }
 
