@@ -102,16 +102,27 @@ async function syncFromCloud() {
     return;
   }
   try {
+    let dataChanged = false;
+
+    // Helper to check and set local storage
+    const updateLocalData = (key, newData) => {
+      const strData = JSON.stringify(newData);
+      if (localStorage.getItem(key) !== strData) {
+        localStorage.setItem(key, strData);
+        dataChanged = true;
+      }
+    };
+
     // 1. Fetch categories
     const { data: categories } = await supabaseClient.from('categories').select('name');
     if (categories) {
-      localStorage.setItem('flowers_categories', JSON.stringify(categories.map(c => c.name)));
+      updateLocalData('flowers_categories', categories.map(c => c.name));
     }
 
     // 2. Fetch products
     const { data: products } = await supabaseClient.from('products').select('*').order('id', { ascending: true });
     if (products) {
-      localStorage.setItem('flowers_products', JSON.stringify(products));
+      updateLocalData('flowers_products', products);
     }
 
     // 3. Fetch users
@@ -128,7 +139,7 @@ async function syncFromCloud() {
         creditLimit: parseFloat(u.credit_limit || 0),
         creditHistory: u.credit_history || []
       }));
-      localStorage.setItem('flowers_users', JSON.stringify(mappedUsers));
+      updateLocalData('flowers_users', mappedUsers);
     }
 
     // 4. Fetch orders
@@ -146,20 +157,22 @@ async function syncFromCloud() {
         status: o.status,
         date: o.date
       }));
-      localStorage.setItem('flowers_orders', JSON.stringify(mappedOrders));
+      updateLocalData('flowers_orders', mappedOrders);
     }
 
     // 5. Fetch settings
     const { data: settings } = await supabaseClient.from('settings').select('*').eq('id', 'app_settings').single();
     if (settings) {
-      localStorage.setItem('flowers_settings', JSON.stringify({
+      updateLocalData('flowers_settings', {
         gamesEnabled: settings.games_enabled,
         criticalStockThreshold: settings.critical_stock_threshold
-      }));
+      });
     }
 
-    // Dispatch event to refresh views
-    window.dispatchEvent(new Event('db_updated'));
+    // Dispatch event to refresh views ONLY if data actually changed
+    if (dataChanged) {
+      window.dispatchEvent(new Event('db_updated'));
+    }
   } catch (err) {
     console.error("Error syncing from Supabase:", err);
   }
