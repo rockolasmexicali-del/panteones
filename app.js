@@ -577,12 +577,14 @@ function renderCatalog() {
       html += `
         <div class="category-section">
           <h2 class="category-section-title">${getCategoryIcon(cat)} ${catName}</h2>
-          <div class="category-row-horizontal" data-category="${cat}">
+          <div class="scroll-arrow scroll-arrow-left" onclick="scrollCategory(this, -1)">‹</div>
+          <div class="category-row-horizontal" data-category="${cat}" onscroll="updateScrollArrows(this)">
             ${grouped[cat].map(p => {
               const inCart = state.cart[p.id] || 0;
               return generateProductCardHTML(p, inCart, settings);
             }).join('')}
           </div>
+          <div class="scroll-arrow scroll-arrow-right" onclick="scrollCategory(this, 1)">›</div>
         </div>
       `;
     }
@@ -630,8 +632,43 @@ function renderCatalog() {
       row.scrollLeft = horizontalScrolls[cat];
       row.style.scrollBehavior = originalRowBehavior;
     }
+    // Update scroll arrows after DOM changes and restoring scroll
+    setTimeout(() => updateScrollArrows(row), 50);
   });
 }
+
+// Funciones para manejar el scroll de categorías
+window.scrollCategory = function(arrowElement, direction) {
+  const container = arrowElement.parentElement.querySelector('.category-row-horizontal');
+  if (container) {
+    const scrollAmount = container.clientWidth * 0.8;
+    container.scrollBy({ left: scrollAmount * direction, behavior: 'smooth' });
+  }
+};
+
+window.updateScrollArrows = function(container) {
+  const parent = container.parentElement;
+  if (!parent) return;
+  const leftArrow = parent.querySelector('.scroll-arrow-left');
+  const rightArrow = parent.querySelector('.scroll-arrow-right');
+  if (!leftArrow || !rightArrow) return;
+
+  const maxScrollLeft = container.scrollWidth - container.clientWidth;
+  
+  if (container.scrollLeft > 0) {
+    leftArrow.classList.add('visible');
+  } else {
+    leftArrow.classList.remove('visible');
+  }
+
+  // Allow a small threshold (1px) for right edge rounding issues
+  // Check if scrollable at all
+  if (maxScrollLeft > 0 && container.scrollLeft < maxScrollLeft - 1) {
+    rightArrow.classList.add('visible');
+  } else {
+    rightArrow.classList.remove('visible');
+  }
+};
 
 // Render category filter chips
 function renderCategoryFilters() {
